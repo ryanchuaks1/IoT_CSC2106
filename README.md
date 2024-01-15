@@ -1,3 +1,12 @@
 # IoT_CSC2106
 
-Hello World 2!
+To install freeRTOS
+```bash
+git submodule update --init
+```
+
+To run web app
+```bash
+cd trafficsg
+npm run dev
+```
