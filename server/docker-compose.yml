@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+
+  server:
+    build: ./node_server
+    container_name: server
+    restart: always
+    profiles: ['server', 'all']
+    ports:
+      - 5000:5000
+    depends_on:
+      - mongodb
+    networks:
+      - app_network
+
+  mongodb:
+    image: docker.io/bitnami/mongodb-sharded:6.0
+    container_name: mongodb
+    restart: always
+    profiles: ['server', 'all']
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb
+      - MONGODB_SHARDING_MODE=mongos
+      - MONGODB_CFG_PRIMARY_HOST=mongodb-cfg
+      - MONGODB_CFG_REPLICA_SET_NAME=cfgreplicaset
+      - MONGODB_REPLICA_SET_KEY=replicasetkey
+      - MONGODB_ROOT_PASSWORD=password
+    networks:
+      - app_network
+
+  mongodb-shard0:
+    image: docker.io/bitnami/mongodb-sharded:6.0
+    container_name: mongodb-shard0
+    restart: always
+    profiles: ['server', 'all']
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard0
+      - MONGODB_SHARDING_MODE=shardsvr
+      - MONGODB_MONGOS_HOST=mongodb
+      - MONGODB_ROOT_PASSWORD=password
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_REPLICA_SET_KEY=replicasetkey
+      - MONGODB_REPLICA_SET_NAME=shard0
+    networks:
+      - app_network
+
+  mongodb-shard1:
+    image: docker.io/bitnami/mongodb-sharded:6.0
+    container_name: mongodb-shard1
+    restart: always
+    profiles: ['server', 'all']
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard1
+      - MONGODB_SHARDING_MODE=shardsvr
+      - MONGODB_MONGOS_HOST=mongodb
+      - MONGODB_ROOT_PASSWORD=password
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_REPLICA_SET_KEY=replicasetkey
+      - MONGODB_REPLICA_SET_NAME=shard1
+    networks:
+      - app_network
+
+  mongodb-shard2:
+    image: docker.io/bitnami/mongodb-sharded:6.0
+    container_name: mongodb-shard2
+    restart: always
+    profiles: ['server', 'all']
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-shard2
+      - MONGODB_SHARDING_MODE=shardsvr
+      - MONGODB_MONGOS_HOST=mongodb
+      - MONGODB_ROOT_PASSWORD=password
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_REPLICA_SET_KEY=replicasetkey
+      - MONGODB_REPLICA_SET_NAME=shard2
+    networks:
+      - app_network
+
+  mongodb-cfg:
+    image: docker.io/bitnami/mongodb-sharded:6.0
+    container_name: mongodb-cfg
+    restart: always
+    profiles: ['server', 'all']
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-cfg
+      - MONGODB_SHARDING_MODE=configsvr
+      - MONGODB_ROOT_PASSWORD=password
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_REPLICA_SET_KEY=replicasetkey
+      - MONGODB_REPLICA_SET_NAME=cfgreplicaset
+    networks:
+      - app_network
+
+networks:
+  app_network:
