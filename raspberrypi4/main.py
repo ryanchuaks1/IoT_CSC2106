@@ -2,6 +2,8 @@ import subprocess
 import json
 from typing import Dict
 
+from yolo import count_vehicles
+
 
 def install_dependencies():
     requirements_file = "requirements.txt"
@@ -9,8 +11,7 @@ def install_dependencies():
 
 
 def startYOLOModel(source) -> str:
-    subprocess.run(["python", "yolo.py", "--weights", "yolov8l.pt",
-                   "--source", source, "--view-img",])
+    count_vehicles(source)
     vehicle_count = {
 
     }
