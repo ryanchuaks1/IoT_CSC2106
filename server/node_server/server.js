@@ -1,65 +1,134 @@
 const express = require('express');
-const { json } = require('body-parser');
+const bodyParser = require('body-parser');
+const { MongoClient, ObjectId } = require('mongodb');
+
+const MONGO_URI = 'mongodb://root:password@mongodb:27017/mongo_db?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&retryWrites=true&ssl=false';
 
 const app = express();
 const port = 5000;
 
-// TEMP DATA FOR TESTING
-let items = [
-  { id: 1, name: 'Item 1' },
-  { id: 2, name: 'Item 2' },
-  { id: 3, name: 'Item 3' },
-];
+app.use(bodyParser.json());
 
-app.use(json());
+let db;
 
-// Get all items
-app.get('/items', (req, res) => {
-  res.json(items);
-});
+const connectDB = async () => {
+  try {
+    const client = await MongoClient.connect(MONGO_URI, { useNewUrlParser: true });
+    db = client.db();
+    console.log('Connected to MongoDB successfully!');
+  } catch (error) {
+    console.error('Could not connect to MongoDB:', error);
+  }
+};
 
-// Get a single item by ID
-app.get('/items/:id', (req, res) => {
-  const itemId = parseInt(req.params.id);
-  const item = items.find(item => item.id === itemId);
+const closeDB = () => {
+  if (db) {
+    db.close();
+    console.log('Closed MongoDB connection.');
+  }
+};
 
-  if (item) {
-    res.json(item);
-  } else {
-    res.status(404).json({ error: 'Item not found' });
+// Routes
+// Add traffic data
+app.post('/api/addTrafficData', async (req, res) => {
+  const trafficData = req.body.traffic_data;
+  const trafficDataCollection = db.collection('trafficdata');
+
+  try {
+    const result = await trafficDataCollection.insertMany(trafficData);
+
+    res.status(201).json({ result: true, message: 'Traffic data added successfully!' });
+  } catch (error) {
+    console.error('Error adding traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
   }
 });
 
-// Create a new item
-app.post('/items', (req, res) => {
-  const newItem = req.body;
-  newItem.id = items.length + 1;
-  items.push(newItem);
-  res.status(201).json(newItem);
+// Update traffic data // Not tested
+app.post('/api/updateTrafficData', async (req, res) => {
+  const trafficData = req.body.traffic_data;
+  const trafficDataCollection = db.collection('trafficdata');
+
+  try {
+    const updateResult = await trafficDataCollection.updateOne(
+      { _id: ObjectId(trafficData.id) },
+      {
+        $set: {
+          lane_direction: trafficData.lane_direction,
+          number_of_vehicles: trafficData.number_of_vehicles,
+          isEmergency: trafficData.isEmergency,
+        },
+      }
+    );
+
+    res.status(201).json({ result: true, message: 'Traffic data updated successfully!' });
+  } catch (error) {
+    console.error('Error updating traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
+  }
 });
 
-// Update an item by ID
-app.put('/items/:id', (req, res) => {
-  const itemId = parseInt(req.params.id);
-  const updatedItem = req.body;
+// Delete traffic data by id // Not Working
+app.post('/api/deleteTrafficData', async (req, res) => {
+  const trafficData = req.body.traffic_data;
+  const trafficDataCollection = db.collection('trafficdata');
 
-  items = items.map(item => {
-    if (item.id === itemId) {
-      return { ...item, ...updatedItem, id: itemId };
+  try {
+    const deleteResult = await trafficDataCollection.deleteOne({ _id: ObjectId(trafficData.id) });
+
+    res.status(201).json({ result: true, message: 'Traffic data deleted successfully!' });
+  } catch (error) {
+    console.error('Error deleting traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
+  }
+});
+
+// Get traffic data by traffic_id
+app.get('/api/getTrafficData/:traffic_id', async (req, res) => {
+  const trafficId = req.params.traffic_id;
+  const trafficDataCollection = db.collection('trafficdata');
+
+  try {
+    let query = {};
+
+    if (trafficId) {
+      query = { traffic_id: trafficId };
     }
-    return item;
+
+    const allTrafficData = await trafficDataCollection.find(query).toArray();
+
+    if (allTrafficData.length > 0) {
+      res.status(200).json({ body: allTrafficData });
+    } else {
+      res.status(404).json({ result: false, message: 'Traffic data not found' });
+    }
+  } catch (error) {
+    console.error('Error getting traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
+  }
+});
+
+// Get all traffic data
+app.get('/api/getAllTrafficData', async (req, res) => {
+  const trafficDataCollection = db.collection('trafficdata');
+
+  try {
+    const allTrafficData = await trafficDataCollection.find().toArray();
+
+    res.status(200).json({ body: allTrafficData });
+  } catch (error) {
+    console.error('Error getting all traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
+  }
+});
+
+connectDB().then(() => {
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
   });
-
-  res.json({ message: 'Item updated successfully' });
 });
 
-// Delete an item by ID
-app.delete('/items/:id', (req, res) => {
-  const itemId = parseInt(req.params.id);
-  items = items.filter(item => item.id !== itemId);
-  res.json({ message: 'Item deleted successfully' });
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+process.on('SIGINT', () => {
+  closeDB();
+  process.exit();
 });

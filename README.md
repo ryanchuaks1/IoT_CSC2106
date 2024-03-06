@@ -17,11 +17,11 @@ npm run dev
 2. Start the docker containers
 ```bash
 cd server
-start.sh
+bash start.sh
 ```
 Exit code
  ```bash
-stop.sh
+bash stop.sh
 ```
 
 **Raspberry Pi**

@@ -12,7 +12,7 @@ services:
     depends_on:
       - mongodb
     networks:
-      - app_network
+      - trafficsg_network
 
   mongodb:
     image: docker.io/bitnami/mongodb-sharded:6.0
@@ -27,7 +27,7 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey
       - MONGODB_ROOT_PASSWORD=password
     networks:
-      - app_network
+      - trafficsg_network
 
   mongodb-shard0:
     image: docker.io/bitnami/mongodb-sharded:6.0
@@ -43,7 +43,7 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey
       - MONGODB_REPLICA_SET_NAME=shard0
     networks:
-      - app_network
+      - trafficsg_network
 
   mongodb-shard1:
     image: docker.io/bitnami/mongodb-sharded:6.0
@@ -59,7 +59,7 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey
       - MONGODB_REPLICA_SET_NAME=shard1
     networks:
-      - app_network
+      - trafficsg_network
 
   mongodb-shard2:
     image: docker.io/bitnami/mongodb-sharded:6.0
@@ -75,7 +75,7 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey
       - MONGODB_REPLICA_SET_NAME=shard2
     networks:
-      - app_network
+      - trafficsg_network
 
   mongodb-cfg:
     image: docker.io/bitnami/mongodb-sharded:6.0
@@ -90,7 +90,33 @@ services:
       - MONGODB_REPLICA_SET_KEY=replicasetkey
       - MONGODB_REPLICA_SET_NAME=cfgreplicaset
     networks:
-      - app_network
+      - trafficsg_network
+
+  mongoimport:
+    build:
+      context: ./node_server/mongo-import
+    container_name: mongoimport
+    profiles: ['server', 'all']
+    depends_on:
+      - mongodb
+    networks:
+      - trafficsg_network
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    profiles: ['all']
+    ports:
+      - 127.0.0.1:8081:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - trafficsg_network
 
 networks:
-  app_network:
+  trafficsg_network:
