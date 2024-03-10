@@ -1,3 +1,5 @@
+"use client";
+
 import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
