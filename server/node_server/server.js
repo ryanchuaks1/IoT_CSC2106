@@ -74,14 +74,13 @@ app.put('/api/traffic-data/:object_id', async (req, res) => {
   }
 });
 
-// Delete traffic data by id // Not Working
-app.post('/api/deleteTrafficData', async (req, res) => {
-  const trafficData = req.body.traffic_data;
+// Delete traffic data by `object_id`
+app.delete('/api/traffic-data/:object_id', async (req, res) => {
+  const objectId = req.params.object_id;
   const trafficDataCollection = db.collection('trafficdata');
 
   try {
-    const deleteResult = await trafficDataCollection.deleteOne({ _id: ObjectId(trafficData.id) });
-
+    const deleteResult = await trafficDataCollection.deleteOne({ _id: ObjectId(objectId) });
     res.status(201).json({ result: true, message: 'Traffic data deleted successfully!' });
   } catch (error) {
     console.error('Error deleting traffic data:', error);

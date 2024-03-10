@@ -60,4 +60,8 @@ curl -X PUT -H "Content-Type: application/json" -d "{
 ```bash
 curl -X PUT -H "Content-Type: application/json" -d "{\"traffic_data\": {\"lane_direction\": \"south\", \"number_of_vehicles\": 123, \"isEmergency\": false } }" http://127.0.0.1:5000/api/traffic-data/object_id
 ```
+
+## Delete traffic data (Replace `object_id` with `_id`)
+```bash
+curl -X DELETE http://127.0.0.1:5000/api/traffic-data/object_id
 ```
