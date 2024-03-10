@@ -1,9 +1,46 @@
 "use client";
 
+// Import React libraries
+import React, { useEffect, useState } from "react";
+import { Client as MQTTClient } from "paho-mqtt";
+
+// Import user-defined files
 import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 export default function Sandbox() {
+  const [client, setClient] = useState<MQTTClient | null>(null);
+
+  useEffect(() => {
+    const mqttClient = new MQTTClient("broker.hivemq.com", 8000, "TrafficSG");
+
+    mqttClient.onConnectionLost = (responseObject) => {
+      if (responseObject.errorCode !== 0) {
+        console.log("MQTT Connection Lost:", responseObject.errorMessage);
+      }
+    };
+
+    mqttClient.onMessageArrived = (message) => {
+      console.log("MQTT Message Arrived:", message.payloadString);
+    };
+
+    mqttClient.connect({
+      onSuccess: () => {
+        console.log("Connected to broker");
+        mqttClient.subscribe("trafficsg/traffic-data/changes");
+      },
+    });
+
+    setClient(mqttClient);
+
+    // Clean up connection on component unmount
+    return () => {
+      if (mqttClient) {
+        mqttClient.disconnect();
+      }
+    };
+  }, []);
+
   const trafficDataEndpoints: Endpoint[] = [
     {
       method: "GET",

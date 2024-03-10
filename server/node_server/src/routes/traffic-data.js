@@ -1,16 +1,18 @@
 // Import dependencies
 const express = require("express");
 const { ObjectId } = require("mongodb");
+const mqttClient = require("../services/mqtt");
 const { getDB } = require("../services/mongodb");
 
 const trafficDataRoutes = express.Router();
 
 // Get all traffic data
 trafficDataRoutes.get("/", async (req, res) => {
-  const db = getDB();
-  const trafficDataCollection = db.collection("trafficdata");
+  const mongodbClient = getDB();
+  const trafficDataCollection = mongodbClient.collection("trafficdata");
 
   try {
+    // Get all traffic data from the database
     const allTrafficData = await trafficDataCollection.find().toArray();
 
     res.status(200).json(allTrafficData);
@@ -24,8 +26,8 @@ trafficDataRoutes.get("/", async (req, res) => {
 trafficDataRoutes.post("/", async (req, res) => {
   let trafficData = req.body.traffic_data;
 
-  const db = getDB();
-  const trafficDataCollection = db.collection("trafficdata");
+  const mongodbClient = getDB();
+  const trafficDataCollection = mongodbClient.collection("trafficdata");
 
   // Check if trafficData is an array or a single object
   if (!Array.isArray(trafficData)) {
@@ -33,7 +35,12 @@ trafficDataRoutes.post("/", async (req, res) => {
   }
 
   try {
+    // Insert traffic data into the database
     const result = await trafficDataCollection.insertMany(trafficData);
+
+    // Publish a message to the MQTT topic after successful insertion
+    mqttClient.publish('trafficsg/traffic-data/changes', JSON.stringify({ action: 'add', data: trafficData }));
+
     res
       .status(201)
       .json({ result: true, message: "Traffic data added successfully!" });
@@ -47,8 +54,8 @@ trafficDataRoutes.post("/", async (req, res) => {
 trafficDataRoutes.get("/:traffic_id", async (req, res) => {
   const trafficId = req.params.traffic_id;
 
-  const db = getDB();
-  const trafficDataCollection = db.collection("trafficdata");
+  const mongodbClient = getDB();
+  const trafficDataCollection = mongodbClient.collection("trafficdata");
 
   try {
     let query = {};
@@ -57,6 +64,7 @@ trafficDataRoutes.get("/:traffic_id", async (req, res) => {
       query = { traffic_id: trafficId };
     }
 
+    // Get traffic data from the database
     const allTrafficData = await trafficDataCollection.find(query).toArray();
 
     if (allTrafficData.length > 0) {
@@ -77,10 +85,11 @@ trafficDataRoutes.put("/:object_id", async (req, res) => {
   const objectId = req.params.object_id;
   const trafficData = req.body.traffic_data;
 
-  const db = getDB();
-  const trafficDataCollection = db.collection("trafficdata");
+  const mongodbClient = getDB();
+  const trafficDataCollection = mongodbClient.collection("trafficdata");
 
   try {
+    // Update traffic data in the database
     const updateResult = await trafficDataCollection.updateOne(
       { _id: ObjectId(objectId) },
       {
@@ -91,6 +100,9 @@ trafficDataRoutes.put("/:object_id", async (req, res) => {
         },
       }
     );
+
+    // Publish a message to the MQTT topic after successful update
+    mqttClient.publish('trafficsg/traffic-data/changes', JSON.stringify({ action: 'update', data: trafficData }));
 
     res
       .status(201)
@@ -105,13 +117,18 @@ trafficDataRoutes.put("/:object_id", async (req, res) => {
 trafficDataRoutes.delete("/:object_id", async (req, res) => {
   const objectId = req.params.object_id;
 
-  const db = getDB();
-  const trafficDataCollection = db.collection("trafficdata");
+  const mongodbClient = getDB();
+  const trafficDataCollection = mongodbClient.collection("trafficdata");
 
   try {
+    // Delete traffic data from the database
     const deleteResult = await trafficDataCollection.deleteOne({
       _id: ObjectId(objectId),
     });
+
+    // Publish a message to the MQTT topic after successful deletion
+    mqttClient.publish('trafficsg/traffic-data/changes', JSON.stringify({ action: 'delete', data: objectId }));
+
     res
       .status(201)
       .json({ result: true, message: "Traffic data deleted successfully!" });
