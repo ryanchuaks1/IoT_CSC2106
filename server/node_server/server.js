@@ -31,13 +31,17 @@ const closeDB = () => {
 // Routes (Traffic Data)
 
 // Add traffic data
-  const trafficData = req.body.traffic_data;
 app.post('/api/traffic-data', async (req, res) => {
+  let trafficData = req.body.traffic_data;
   const trafficDataCollection = db.collection('trafficdata');
+
+  // Check if trafficData is an array or a single object
+  if (!Array.isArray(trafficData)) {
+    trafficData = [trafficData];
+  }
 
   try {
     const result = await trafficDataCollection.insertMany(trafficData);
-
     res.status(201).json({ result: true, message: 'Traffic data added successfully!' });
   } catch (error) {
     console.error('Error adding traffic data:', error);
