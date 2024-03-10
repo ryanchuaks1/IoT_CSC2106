@@ -8,4 +8,4 @@ export interface Endpoint {
   description: string;
 }
 
-export interface EndpointItemProps extends Endpoint {}
+export interface EndpointListItemProps extends Endpoint {}

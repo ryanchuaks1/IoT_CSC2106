@@ -1,7 +1,7 @@
 import { MethodTag } from "./MethodTag";
-import { EndpointItemProps } from "../types";
+import { EndpointListItemProps } from "../types";
 
-export const EndpointItem: React.FC<EndpointItemProps> = ({
+export const EndpointListItem: React.FC<EndpointListItemProps> = ({
   method,
   path,
   description,

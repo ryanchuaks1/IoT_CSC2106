@@ -1,5 +1,5 @@
 import { Endpoint } from "./types";
-import { EndpointItem } from "./Components/EndpointItem";
+import { EndpointListItem } from "./Components/EndpointListItem";
 
 const serverUrl = process.env.SERVER_URL;
 
@@ -36,7 +36,7 @@ export default function Sandbox() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="container mx-auto p-4">
         {endpoints.map((endpoint, index) => (
-          <EndpointItem key={index} {...endpoint} />
+          <EndpointListItem key={index} {...endpoint} />
         ))}
       </div>
     </main>
