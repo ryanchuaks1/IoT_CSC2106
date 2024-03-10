@@ -2,11 +2,17 @@ import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 export default function Sandbox() {
-  const endpoints: Endpoint[] = [
+
+  const trafficDataEndpoints: Endpoint[] = [
     {
       method: "GET",
       path: "/api/traffic-data",
       description: "Get all traffic data",
+      html: (
+        <div>
+          Replace here.
+        </div>
+      ),
     },
     {
       method: "GET",
@@ -33,8 +39,9 @@ export default function Sandbox() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="container mx-auto p-4">
-        {endpoints.map((endpoint, index) => (
-          <EndpointListItem key={index} {...endpoint} />
+        <h1 className="text-xl font-bold m-2">Traffic Data API</h1>
+        {trafficDataEndpoints.map((trafficDataEndpoint, index) => (
+          <EndpointListItem key={index} {...trafficDataEndpoint} />
         ))}
       </div>
     </main>
