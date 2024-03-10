@@ -30,6 +30,20 @@ const closeDB = () => {
 
 // Routes (Traffic Data)
 
+// Get all traffic data
+app.get('/api/traffic-data', async (req, res) => {
+  const trafficDataCollection = db.collection('trafficdata');
+
+  try {
+    const allTrafficData = await trafficDataCollection.find().toArray();
+
+    res.status(200).json({ body: allTrafficData });
+  } catch (error) {
+    console.error('Error getting all traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
+  }
+});
+
 // Add traffic data
 app.post('/api/traffic-data', async (req, res) => {
   let trafficData = req.body.traffic_data;
@@ -45,6 +59,31 @@ app.post('/api/traffic-data', async (req, res) => {
     res.status(201).json({ result: true, message: 'Traffic data added successfully!' });
   } catch (error) {
     console.error('Error adding traffic data:', error);
+    res.status(500).json({ result: false, message: 'Internal server error' });
+  }
+});
+
+// Get traffic data by `traffic_id`
+app.get('/api/traffic-data/:traffic_id', async (req, res) => {
+  const trafficId = req.params.traffic_id;
+  const trafficDataCollection = db.collection('trafficdata');
+
+  try {
+    let query = {};
+
+    if (trafficId) {
+      query = { traffic_id: trafficId };
+    }
+
+    const allTrafficData = await trafficDataCollection.find(query).toArray();
+
+    if (allTrafficData.length > 0) {
+      res.status(200).json({ body: allTrafficData });
+    } else {
+      res.status(404).json({ result: false, message: 'Traffic data not found' });
+    }
+  } catch (error) {
+    console.error('Error getting traffic data:', error);
     res.status(500).json({ result: false, message: 'Internal server error' });
   }
 });
@@ -84,45 +123,6 @@ app.delete('/api/traffic-data/:object_id', async (req, res) => {
     res.status(201).json({ result: true, message: 'Traffic data deleted successfully!' });
   } catch (error) {
     console.error('Error deleting traffic data:', error);
-    res.status(500).json({ result: false, message: 'Internal server error' });
-  }
-});
-
-// Get traffic data by `traffic_id`
-app.get('/api/traffic-data/:traffic_id', async (req, res) => {
-  const trafficId = req.params.traffic_id;
-  const trafficDataCollection = db.collection('trafficdata');
-
-  try {
-    let query = {};
-
-    if (trafficId) {
-      query = { traffic_id: trafficId };
-    }
-
-    const allTrafficData = await trafficDataCollection.find(query).toArray();
-
-    if (allTrafficData.length > 0) {
-      res.status(200).json({ body: allTrafficData });
-    } else {
-      res.status(404).json({ result: false, message: 'Traffic data not found' });
-    }
-  } catch (error) {
-    console.error('Error getting traffic data:', error);
-    res.status(500).json({ result: false, message: 'Internal server error' });
-  }
-});
-
-// Get all traffic data
-app.get('/api/traffic-data', async (req, res) => {
-  const trafficDataCollection = db.collection('trafficdata');
-
-  try {
-    const allTrafficData = await trafficDataCollection.find().toArray();
-
-    res.status(200).json({ body: allTrafficData });
-  } catch (error) {
-    console.error('Error getting all traffic data:', error);
     res.status(500).json({ result: false, message: 'Internal server error' });
   }
 });
