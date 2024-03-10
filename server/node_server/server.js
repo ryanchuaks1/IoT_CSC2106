@@ -37,7 +37,7 @@ app.get('/api/traffic-data', async (req, res) => {
   try {
     const allTrafficData = await trafficDataCollection.find().toArray();
 
-    res.status(200).json({ body: allTrafficData });
+    res.status(200).json(allTrafficData);
   } catch (error) {
     console.error('Error getting all traffic data:', error);
     res.status(500).json({ result: false, message: 'Internal server error' });
@@ -78,7 +78,7 @@ app.get('/api/traffic-data/:traffic_id', async (req, res) => {
     const allTrafficData = await trafficDataCollection.find(query).toArray();
 
     if (allTrafficData.length > 0) {
-      res.status(200).json({ body: allTrafficData });
+      res.status(200).json(allTrafficData);
     } else {
       res.status(404).json({ result: false, message: 'Traffic data not found' });
     }
