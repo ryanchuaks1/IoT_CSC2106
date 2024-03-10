@@ -49,14 +49,15 @@ app.post('/api/traffic-data', async (req, res) => {
   }
 });
 
-// Update traffic data // Not tested
-app.post('/api/updateTrafficData', async (req, res) => {
+// Update traffic data by `object_id`
+app.put('/api/traffic-data/:object_id', async (req, res) => {
+  const objectId = req.params.object_id;
   const trafficData = req.body.traffic_data;
   const trafficDataCollection = db.collection('trafficdata');
 
   try {
     const updateResult = await trafficDataCollection.updateOne(
-      { _id: ObjectId(trafficData.id) },
+      { _id: ObjectId(objectId) },
       {
         $set: {
           lane_direction: trafficData.lane_direction,
