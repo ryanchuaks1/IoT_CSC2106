@@ -4,17 +4,11 @@ import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 export default function Sandbox() {
-
   const trafficDataEndpoints: Endpoint[] = [
     {
       method: "GET",
       path: "/api/traffic-data",
       description: "Get all traffic data",
-      html: (
-        <div>
-          Replace here.
-        </div>
-      ),
     },
     {
       method: "GET",
