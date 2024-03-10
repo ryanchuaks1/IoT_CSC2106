@@ -28,10 +28,11 @@ const closeDB = () => {
   }
 };
 
-// Routes
+// Routes (Traffic Data)
+
 // Add traffic data
-app.post('/api/addTrafficData', async (req, res) => {
   const trafficData = req.body.traffic_data;
+app.post('/api/traffic-data', async (req, res) => {
   const trafficDataCollection = db.collection('trafficdata');
 
   try {
@@ -83,8 +84,8 @@ app.post('/api/deleteTrafficData', async (req, res) => {
   }
 });
 
-// Get traffic data by traffic_id
-app.get('/api/getTrafficData/:traffic_id', async (req, res) => {
+// Get traffic data by `traffic_id`
+app.get('/api/traffic-data/:traffic_id', async (req, res) => {
   const trafficId = req.params.traffic_id;
   const trafficDataCollection = db.collection('trafficdata');
 
@@ -109,7 +110,7 @@ app.get('/api/getTrafficData/:traffic_id', async (req, res) => {
 });
 
 // Get all traffic data
-app.get('/api/getAllTrafficData', async (req, res) => {
+app.get('/api/traffic-data', async (req, res) => {
   const trafficDataCollection = db.collection('trafficdata');
 
   try {

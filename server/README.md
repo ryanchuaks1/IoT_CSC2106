@@ -2,12 +2,12 @@
 
 ## Get all traffic data
 ```bash
-curl http://127.0.0.1:5000/api/getAllTrafficData
+curl http://127.0.0.1:5000/api/traffic-data
 ```
 
 ## Get all traffic data for a specific junction
 ```bash
-curl http://127.0.0.1:5000/api/getTrafficData/1
+curl http://127.0.0.1:5000/api/traffic-data/1
 ```
 
 ## Add traffic data
@@ -39,7 +39,7 @@ curl -X POST -H "Content-Type: application/json" -d "{
       \"isEmergency\": false
     }
   ]
-}" http://127.0.0.1:5000/api/addTrafficData
+}" http://127.0.0.1:5000/api/traffic-data
 ```
 ## One line version of ^ for command line users
 ```bash
