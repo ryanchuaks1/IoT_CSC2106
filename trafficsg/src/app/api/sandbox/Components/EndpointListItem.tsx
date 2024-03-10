@@ -1,6 +1,8 @@
 import { MethodTag } from "./MethodTag";
 import { EndpointListItemProps } from "../types";
 
+const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+
 export const EndpointListItem: React.FC<EndpointListItemProps> = ({
   method,
   path,

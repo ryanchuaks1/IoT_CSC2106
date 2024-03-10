@@ -1,8 +1,6 @@
 import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
-const serverUrl = process.env.SERVER_URL;
-
 export default function Sandbox() {
   const endpoints: Endpoint[] = [
     {
