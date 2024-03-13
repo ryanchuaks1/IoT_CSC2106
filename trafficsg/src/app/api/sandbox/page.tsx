@@ -14,11 +14,11 @@ export default function Sandbox() {
   const [trafficData, setTrafficData] = useState<any[]>([]);
   const [client, setClient] = useState<MQTTClient | null>(null);
 
-   // Function to fetch traffic data
-   const fetchTrafficData = async () => {
+  // Function to fetch traffic data
+  const fetchTrafficData = async () => {
     const response = await fetch(`${serverUrl}/api/traffic-data`);
     if (!response.ok) {
-      throw new Error('Failed to fetch traffic data');
+      throw new Error("Failed to fetch traffic data");
     }
     return await response.json();
   };
@@ -98,33 +98,44 @@ export default function Sandbox() {
   ];
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="container mx-auto p-4">
+    <main className="flex min-h-screen flex-col items-center p-24">
+      <div className="container p-4">
         <h1 className="text-xl font-bold m-2">Real-Time Traffic Data (MQTT)</h1>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {/* Dynamically generate table headers based on trafficData keys */}
-              {trafficData.length > 0 && Object.keys(trafficData[0]).map((key) => (
-                <th key={key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {key}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {/* Dynamically populate table rows */}
-            {trafficData.map((data, idx) => (
-              <tr key={idx}>
-                {Object.values(data).map((value: any, valueIdx) => (
-                  <td key={valueIdx} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {value.toString()}
-                  </td>
+        {trafficData.length === 0 && (
+          <p className="bg-white text-center font-bold p-4">No data available.</p>
+        )}
+        {trafficData.length > 0 && (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {/* Dynamically generate table headers based on trafficData keys */}
+                {Object.keys(trafficData[0]).map((key) => (
+                  <th
+                    key={key}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {key}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {/* Dynamically populate table rows */}
+              {trafficData.map((data, idx) => (
+                <tr key={idx}>
+                  {Object.values(data).map((value: any, valueIdx) => (
+                    <td
+                      key={valueIdx}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    >
+                      {value.toString()}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
       <div className="container mx-auto p-4">
         <h1 className="text-xl font-bold m-2">Traffic Data API</h1>
