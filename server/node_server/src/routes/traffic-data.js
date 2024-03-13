@@ -34,6 +34,11 @@ trafficDataRoutes.post("/", async (req, res) => {
     trafficData = [trafficData];
   }
 
+  // Add timestamp for each traffic data
+  trafficData = trafficData.map((data) => {
+    return { ...data, timestamp: new Date() };
+  });
+
   try {
     // Insert traffic data into the database
     const result = await trafficDataCollection.insertMany(trafficData);
@@ -97,6 +102,7 @@ trafficDataRoutes.put("/:object_id", async (req, res) => {
           lane_direction: trafficData.lane_direction,
           number_of_vehicles: trafficData.number_of_vehicles,
           isEmergency: trafficData.isEmergency,
+          timestamp: new Date(),
         },
       }
     );
