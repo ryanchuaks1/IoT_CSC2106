@@ -6,6 +6,7 @@
 
 #define BAUD_RATE 9600
 #define ACK_TIMEOUT 5000
+#define SERIAL_DELAY 1000
 #define PAYLOAD_LENGTH 32
 #define MAX_TTL 5
 #define MAX_ADJ_TRAFFIC 4
@@ -114,13 +115,13 @@ void pkt_init(struct Packet* pkt){
   else{
     pkt->sender_id = 0;
     // pkt->destination_id = 0;
-    for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+    for(uint8_t i = 0; i < MAX_ADJ_TRAFFIC; i++){
       pkt->destination_ids[i] = 0;
     }
     pkt->ttl = 0;
 
     pkt->traffic_id = 0;
-    for(int i = 0; i < PAYLOAD_LENGTH; i++){
+    for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
       pkt->payload[i] = 0;
     }
     pkt->checksum = 0;
@@ -135,7 +136,7 @@ struct Packet* generate_new_pkt(char* payload = NULL){
     new_pkt->traffic_id = TRAFFIC_ID;
     snprintf(new_pkt->payload, sizeof(new_pkt->payload), payload);
     new_pkt->checksum = new_pkt->traffic_id;
-    for(int i = 0; i < PAYLOAD_LENGTH; i++){
+    for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
       new_pkt->checksum += new_pkt->payload[i];
     }
   }
@@ -146,7 +147,7 @@ struct Packet* generate_new_pkt(char* payload = NULL){
 void update_pkt_headers(struct Packet* pkt, uint8_t destination_ids[MAX_ADJ_TRAFFIC], uint8_t time_to_live){
   pkt->sender_id = TRAFFIC_ID;
   // pkt->destination_id = destination_id;
-  for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+  for(uint8_t i = 0; i < MAX_ADJ_TRAFFIC; i++){
     pkt->destination_ids[i] = destination_ids[i];
   }
   pkt->ttl = time_to_live;
@@ -161,7 +162,7 @@ void transmit_pkt(struct Packet* pkt_ptr){
 bool packet_is_ok(struct Packet* pkt){
   uint32_t my_checksum = 0;
   my_checksum = pkt->traffic_id;
-  for(int i = 0; i < PAYLOAD_LENGTH; i++){
+  for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
     my_checksum += pkt->payload[i];
   }
 
@@ -169,7 +170,7 @@ bool packet_is_ok(struct Packet* pkt){
 }
 
 bool packet_for_me(struct Packet* pkt){
-  for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+  for(uint8_t i = 0; i < MAX_ADJ_TRAFFIC; i++){
     if(pkt->destination_ids[i] == TRAFFIC_ID){
       return true;
     }
@@ -192,6 +193,9 @@ struct Packet* receive_pkt(){
     Serial.print(F("Packet received. RSSI: "));
     Serial.println(rf95.lastRssi(), DEC);
 
+    print_pkt(pkt_buffer);
+    delay(10);
+
     if(pkt_buffer != NULL){
       if(packet_for_me(pkt_buffer) && packet_is_ok(pkt_buffer) && pkt_buffer->ttl > 0){
         pkt_buffer->ttl -= 1;
@@ -199,7 +203,6 @@ struct Packet* receive_pkt(){
       }
 
       Serial.println(F("Error: Packet conditions not met. Discarding..."));
-      free(pkt_buffer);
     }
     else{
       Serial.println(F("Error: Packet is NULL"));
@@ -209,6 +212,7 @@ struct Packet* receive_pkt(){
     Serial.println(F("Receive failed."));
   }
 
+  free(pkt_buffer);
   return NULL;
 }
 
@@ -218,7 +222,7 @@ void print_pkt(struct Packet* pkt){
   Serial.println(pkt->sender_id);
   Serial.print(F("Destination IDs: "));
   //Serial.println(pkt->destination_id);
-  for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+  for(uint8_t i = 0; i < MAX_ADJ_TRAFFIC; i++){
     Serial.print(pkt->destination_ids[i]);
     Serial.print(", ");
   }
@@ -229,63 +233,58 @@ void print_pkt(struct Packet* pkt){
   Serial.println((char*)pkt->payload);
 }
 
-bool broadcast_pkt(struct Packet* pkt, uint8_t destination_ids[MAX_ADJ_TRAFFIC], uint8_t retransmit_count = 1){
-  bool success = false;
-  update_pkt_headers(pkt, destination_ids, MAX_TTL);
+void broadcast_pkt(struct Packet* pkt, bool forward = false){
+  if (forward){
+    for (uint8_t i = 0; i < MAX_ADJ_TRAFFIC; i++){
+      if (adj_traffic_ids[i] != pkt->sender_id && adj_traffic_ids[i] != pkt->traffic_id) {
+        pkt->destination_ids[i] = adj_traffic_ids[i];
+      }
+      else{
+        pkt->destination_ids[i] = 0;
+      }
+    }
+
+    update_pkt_headers(pkt, pkt->destination_ids, pkt->ttl);
+  }
+  else{
+    update_pkt_headers(pkt, adj_traffic_ids, MAX_TTL);
+  }
 
   transmit_pkt(pkt);
 
   delay(10);
-
-  unsigned long start_time = millis();
-  //unsigned long remaining_time = ACK_TIMEOUT - (millis() - start_time) > 0 ? ACK_TIMEOUT - (millis() - start_time) : 0;
-  unsigned long remaining_time = ACK_TIMEOUT;
-
-  bool has_acked[MAX_ADJ_TRAFFIC] = {false};
-
-  while (rf95.waitAvailableTimeout(remaining_time)){
-    struct Packet* recv_pkt = receive_pkt();
-
-    if(recv_pkt != NULL){
-      if(is_ACK(recv_pkt)){
-        free(recv_pkt);
-        success = true;
-        break;
-      }
-      else{
-        // handle other pakcets
-      }
-    }
-  }
-
-  // if(!success && retransmit_count > 0){
-  //   success = broadcast_pkt(pkt, destination_id, retransmit_count - 1);
-  // }
-
-  return success;
 }
 
-struct Packet* listen_for_pkt(){
+void listen_for_pkt(){
   if(rf95.available()){
     struct Packet* recv_pkt = receive_pkt();
     
     if(recv_pkt != NULL){
-      uint8_t destination_ids[MAX_ADJ_TRAFFIC] = {0};
-      destination_ids[0] = recv_pkt->sender_id;
-      struct Packet* ack_pkt = generate_new_pkt("ACK");
-      update_pkt_headers(ack_pkt, destination_ids, 1);
-
-      delay(10); // some delay before retransmission
-
-      transmit_pkt(ack_pkt);
-      free(ack_pkt);
-
-      return recv_pkt;
+      broadcast_pkt(recv_pkt, true);
+      //Serial.write()
+      free(recv_pkt);
     }
   }
-
-  return NULL;
 }
+
+void check_serial(){
+  if(Serial.available()){
+    uint8_t payload[PAYLOAD_LENGTH];
+    Serial.readBytes((char*)payload, sizeof(PAYLOAD_LENGTH));
+
+    struct Packet* pkt_buffer = generate_new_pkt();
+
+    Serial.readBytes((char*)pkt_buffer, sizeof(struct Packet));
+    
+    if (pkt_buffer != NULL) {
+      broadcast_pkt(pkt_buffer);
+    }
+
+    free(pkt_buffer);
+  }
+}
+
+unsigned long start_time;
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -296,12 +295,17 @@ void setup() {
 
   lora_init();
   delay(1000);
+
+  start_time = millis();
 }
 
 void loop() {
-  struct Packet* received_pkt = listen_for_pkt();
-  if(received_pkt != NULL){
-    print_pkt(received_pkt);
-    while(1);
+  if(millis() - start_time >= SERIAL_DELAY){
+    check_serial();
+    start_time = millis();
+  }
+  else{
+    listen_for_pkt();
+    delay(100);
   }
 }
