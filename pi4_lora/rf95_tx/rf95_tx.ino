@@ -3,12 +3,12 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-//#include <RTClib.h>
 
 #define BAUD_RATE 9600
 #define ACK_TIMEOUT 5000
 #define PAYLOAD_LENGTH 32
 #define MAX_TTL 5
+#define MAX_ADJ_TRAFFIC 4
 
 // OLED stuff
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
@@ -45,19 +45,20 @@ void lora_init(){
   while (!rf95.init()) {
     display.println("LoRa radio init Failed");
     display.display();
-    Serial.println("LoRa radio init failed");
+    Serial.println(F("LoRa radio init failed"));
     while (1);
   }
-  Serial.println("LoRa radio init OK!");
+  Serial.println(F("LoRa radio init OK!"));
 
   // Defaults after init are 915.0MHz, modulation GFSK_Rb250Fd250, +13dbM
   if (!rf95.setFrequency(RF95_FREQ)) {
     display.println("setFrequency Failed");
     display.display();
-    Serial.println("setFrequency failed");
+    Serial.println(F("setFrequency failed"));
     while (1);
   }
-  Serial.print("Set Freq to:"); Serial.println(RF95_FREQ);
+  Serial.print(F("Set Freq to:"));
+  Serial.println(RF95_FREQ);
 
   // Defaults after init are 915.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
@@ -95,9 +96,11 @@ void oled_display(char* message){
 
 // Packet related functions
 
+uint8_t adj_traffic_ids[MAX_ADJ_TRAFFIC] = {2,3,4,5};
+
 struct Packet{
   uint8_t sender_id; // node which sends this packet
-  uint8_t destination_id; // node which receives the packet
+  uint8_t destination_ids[MAX_ADJ_TRAFFIC]; // node which receives the packet
   uint8_t ttl;
 
   uint8_t traffic_id;
@@ -107,12 +110,15 @@ struct Packet{
 
 void pkt_init(struct Packet* pkt){
   if(pkt == NULL){
-    Serial.println("malloc failed. Exiting...");
+    Serial.println(F("malloc failed. Exiting..."));
     exit(1);
   }
   else{
     pkt->sender_id = 0;
-    pkt->destination_id = 0;
+    // pkt->destination_id = 0;
+    for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+      pkt->destination_ids[i] = 0;
+    }
     pkt->ttl = 0;
 
     pkt->traffic_id = 0;
@@ -139,15 +145,16 @@ struct Packet* generate_new_pkt(char* payload = NULL){
   return new_pkt;
 }
 
-void update_pkt_headers(struct Packet* pkt, uint8_t destination_id, uint8_t time_to_live){
+void update_pkt_headers(struct Packet* pkt, uint8_t destination_ids[MAX_ADJ_TRAFFIC], uint8_t time_to_live){
   pkt->sender_id = TRAFFIC_ID;
-  pkt->destination_id = destination_id;
+  // pkt->destination_id = destination_id;
+  for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+    pkt->destination_ids[i] = destination_ids[i];
+  }
   pkt->ttl = time_to_live;
 }
 
 void transmit_pkt(struct Packet* pkt_ptr){
-  oled_display("Transmitting message...");
-
   rf95.send((uint8_t*)pkt_ptr, sizeof(*pkt_ptr));
   delay(10);
   rf95.waitPacketSent();
@@ -163,6 +170,18 @@ bool packet_is_ok(struct Packet* pkt){
   return my_checksum == pkt->checksum;
 }
 
+bool packet_for_me(struct Packet* pkt){
+  for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+    if(pkt->destination_ids[i] == TRAFFIC_ID){
+      return true;
+    }
+  }
+  // if(pkt->destination_id == TRAFFIC_ID){
+  //   return true;
+  // }
+  return false;
+}
+
 bool is_ACK(struct Packet* pkt){
   return strncmp((char*)pkt->payload, "ACK", 3) == 0;
 }
@@ -172,21 +191,51 @@ struct Packet* receive_pkt(){
   struct Packet* pkt_buffer = generate_new_pkt();
 
   if(rf95.recv((uint8_t*)pkt_buffer, &pkt_size)){
-    Serial.println("Packet received.");
-    // Serial.println((char*)pkt_buffer->payload);
-    Serial.print("RSSI: ");
+    Serial.print(F("Packet received. RSSI: "));
     Serial.println(rf95.lastRssi(), DEC);
-    return pkt_buffer;
+
+    print_pkt(pkt_buffer);
+
+    if(pkt_buffer != NULL){
+      if(packet_for_me(pkt_buffer) && packet_is_ok(pkt_buffer) && pkt_buffer->ttl > 0){
+        pkt_buffer->ttl -= 1;
+        return pkt_buffer;
+      }
+
+      Serial.println(F("Error: Packet conditions not met. Discarding..."));
+      free(pkt_buffer);
+    }
+    else{
+      Serial.println(F("Error: Packet is NULL"));
+    }
   }
   else{
-    Serial.println("Receive failed.");
-    return NULL;
+    Serial.println(F("Receive failed."));
   }
+
+  return NULL;
 }
 
-bool broadcast_pkt(struct Packet* pkt, uint8_t destination_id, uint8_t retransmit_count = 1){
+void print_pkt(struct Packet* pkt){
+  Serial.println(F("Packet Contents:"));
+  Serial.print(F("Sender ID: "));
+  Serial.println(pkt->sender_id);
+  Serial.print(F("Destination IDs: "));
+  //Serial.println(pkt->destination_id);
+  for(int i = 0; i < MAX_ADJ_TRAFFIC; i++){
+    Serial.print(pkt->destination_ids[i]);
+    Serial.print(", ");
+  }
+  Serial.println("");
+  Serial.print(F("TTL: "));
+  Serial.println(pkt->ttl);
+  Serial.print(F("Payload: "));
+  Serial.println((char*)pkt->payload);
+}
+
+bool broadcast_pkt(struct Packet* pkt, uint8_t destination_ids[MAX_ADJ_TRAFFIC], uint8_t retransmit_count = 1){
   bool success = false;
-  update_pkt_headers(pkt, destination_id, MAX_TTL);
+  update_pkt_headers(pkt, destination_ids, MAX_TTL);
 
   transmit_pkt(pkt);
 
@@ -199,38 +248,60 @@ bool broadcast_pkt(struct Packet* pkt, uint8_t destination_id, uint8_t retransmi
   while (rf95.waitAvailableTimeout(remaining_time)){
     struct Packet* recv_pkt = receive_pkt();
 
-    if(recv_pkt != NULL && recv_pkt->destination_id == TRAFFIC_ID && packet_is_ok(recv_pkt) && is_ACK(recv_pkt)){
-      success = true;
-      break;
-    }
-
-    else{
-      free(recv_pkt); //discard the packet
-      continue;
+    if(recv_pkt != NULL){
+      if(is_ACK(recv_pkt)){
+        free(recv_pkt);
+        success = true;
+        break;
+      }
+      else{
+        // handle other pakcets
+      }
     }
   }
 
-  if(!success && retransmit_count > 0){
-    delay(1000);
-    success = broadcast_pkt(pkt, destination_id, retransmit_count - 1);
-  }
+  // if(!success && retransmit_count > 0){
+  //   success = broadcast_pkt(pkt, destination_id, retransmit_count - 1);
+  // }
 
   return success;
+}
+
+struct Packet* listen_for_pkt(){
+  if(rf95.available()){
+    struct Packet* recv_pkt = receive_pkt();
+    
+    if(recv_pkt != NULL){
+      uint8_t destination_ids[MAX_ADJ_TRAFFIC] = {0};
+      destination_ids[0] = recv_pkt->sender_id;
+      struct Packet* ack_pkt = generate_new_pkt("ACK");
+      update_pkt_headers(ack_pkt, destination_ids, 1);
+
+      delay(10); // some delay before retransmission
+
+      transmit_pkt(ack_pkt);
+      free(ack_pkt);
+
+      return recv_pkt;
+    }
+  }
+
+  return NULL;
 }
 
 void setup() {
   Serial.begin(BAUD_RATE);
   delay(100);
 
-  oled_init();
-  delay(1000);
+  // oled_init();
+  // delay(1000);
 
   lora_init();
   delay(1000);
 
   struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 1");
 
-  if(broadcast_pkt(test_pkt, 2, 5)){
+  if(broadcast_pkt(test_pkt, adj_traffic_ids, 5)){
     Serial.println("Packet successfully delivered.");
   }
   else{
