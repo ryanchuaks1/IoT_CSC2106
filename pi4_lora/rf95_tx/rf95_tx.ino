@@ -182,6 +182,8 @@ bool packet_is_ok(struct Packet* pkt){
 
 bool packet_is_new(struct Packet* pkt){
   int16_t difference = static_cast<int16_t>(pkt->timestamp) - static_cast<int16_t>(vector_timestamps[pkt->traffic_id]);
+  Serial.print(F("Packet timestmap difference: "));
+  Serial.println(difference);
   if(abs(difference) >= PKT_THRESHOLD){
     return pkt->timestamp < vector_timestamps[pkt->traffic_id];
   }
@@ -279,6 +281,31 @@ void broadcast_pkt(struct Packet* pkt, bool forward = false){
   delay(10);
 }
 
+void to_serial(struct Packet* pkt){
+  uint8_t payload[PAYLOAD_LENGTH];
+  snprintf((char*)payload, sizeof(payload), pkt->payload);
+
+  for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
+    Serial.write(payload[i]);
+  }
+}
+
+struct Packet* check_serial(){
+  if(Serial.available()){
+    uint8_t payload[PAYLOAD_LENGTH];
+    Serial.readBytes((char*)payload, sizeof(PAYLOAD_LENGTH));
+
+    struct Packet* pkt_buffer = generate_new_pkt(payload);
+    
+    if (pkt_buffer != NULL) {
+      return pkt_buffer;
+    }
+
+    free(pkt_buffer);
+  }
+  return NULL;
+}
+
 void listen_for_pkt(){
   if(rf95.available()){
     struct Packet* recv_pkt = receive_pkt();
@@ -286,26 +313,11 @@ void listen_for_pkt(){
     if(recv_pkt != NULL){
       print_pkt(recv_pkt);
       broadcast_pkt(recv_pkt, true);
-      //Serial.write()
+      //to_serial(recv_pkt);
       free(recv_pkt);
     }
-  }
-}
 
-void check_serial(){
-  if(Serial.available()){
-    uint8_t payload[PAYLOAD_LENGTH];
-    Serial.readBytes((char*)payload, sizeof(PAYLOAD_LENGTH));
-
-    struct Packet* pkt_buffer = generate_new_pkt();
-
-    Serial.readBytes((char*)pkt_buffer, sizeof(struct Packet));
-    
-    if (pkt_buffer != NULL) {
-      broadcast_pkt(pkt_buffer);
-    }
-
-    free(pkt_buffer);
+    delay(10);
   }
 }
 
