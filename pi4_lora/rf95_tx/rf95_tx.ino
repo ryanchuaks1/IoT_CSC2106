@@ -6,10 +6,12 @@
 
 #define BAUD_RATE 9600
 #define ACK_TIMEOUT 5000
-#define SERIAL_DELAY 1000
+#define SERIAL_DELAY 5000
 #define PAYLOAD_LENGTH 32
 #define MAX_TTL 5
 #define MAX_ADJ_TRAFFIC 4
+#define MAX_TRAFFIC_IDS 256
+#define PKT_THRESHOLD 248
 
 // OLED stuff
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
@@ -98,6 +100,7 @@ void oled_display(char* message){
 // Packet related functions
 
 uint8_t adj_traffic_ids[MAX_ADJ_TRAFFIC] = {2,3,4,5};
+uint8_t vector_timestamps[MAX_TRAFFIC_IDS] = {0};
 
 struct Packet{
   uint8_t sender_id; // node which sends this packet
@@ -106,6 +109,7 @@ struct Packet{
 
   uint8_t traffic_id;
   uint8_t payload[PAYLOAD_LENGTH];
+  uint8_t timestamp;
   uint32_t checksum;
 };
 
@@ -126,6 +130,7 @@ void pkt_init(struct Packet* pkt){
     for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
       pkt->payload[i] = 0;
     }
+    pkt->timestamp = 0;
     pkt->checksum = 0;
   }
 }
@@ -137,10 +142,13 @@ struct Packet* generate_new_pkt(char* payload = NULL){
   if(payload != NULL){
     new_pkt->traffic_id = TRAFFIC_ID;
     snprintf(new_pkt->payload, sizeof(new_pkt->payload), payload);
+    new_pkt->timestamp = vector_timestamps[TRAFFIC_ID]++;
+
     new_pkt->checksum = new_pkt->traffic_id;
     for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
       new_pkt->checksum += new_pkt->payload[i];
     }
+    new_pkt->checksum += new_pkt->timestamp;
   }
 
   return new_pkt;
@@ -167,8 +175,19 @@ bool packet_is_ok(struct Packet* pkt){
   for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
     my_checksum += pkt->payload[i];
   }
+  my_checksum += pkt->timestamp;
 
   return my_checksum == pkt->checksum;
+}
+
+bool packet_is_new(struct Packet* pkt){
+  int16_t difference = static_cast<int16_t>(pkt->timestamp) - static_cast<int16_t>(vector_timestamps[pkt->traffic_id]);
+  if(abs(difference) >= PKT_THRESHOLD){
+    return pkt->timestamp < vector_timestamps[pkt->traffic_id];
+  }
+  else{
+    return pkt->timestamp > vector_timestamps[pkt->traffic_id];
+  }
 }
 
 bool packet_for_me(struct Packet* pkt){
@@ -194,13 +213,12 @@ struct Packet* receive_pkt(){
   if(rf95.recv((uint8_t*)pkt_buffer, &pkt_size)){
     Serial.print(F("Packet received. RSSI: "));
     Serial.println(rf95.lastRssi(), DEC);
-
-    print_pkt(pkt_buffer);
     delay(10);
 
     if(pkt_buffer != NULL){
-      if(packet_for_me(pkt_buffer) && packet_is_ok(pkt_buffer) && pkt_buffer->ttl > 0){
+      if(packet_for_me(pkt_buffer) && packet_is_ok(pkt_buffer) && pkt_buffer->ttl > 0 && packet_is_new(pkt_buffer)){
         pkt_buffer->ttl -= 1;
+        vector_timestamps[pkt_buffer->sender_id] = pkt_buffer->timestamp;
         return pkt_buffer;
       }
 
@@ -233,6 +251,10 @@ void print_pkt(struct Packet* pkt){
   Serial.println(pkt->ttl);
   Serial.print(F("Payload: "));
   Serial.println((char*)pkt->payload);
+  Serial.print(F("Timestamp: "));
+  Serial.println(pkt->timestamp);
+  Serial.print(F("Checksum: "));
+  Serial.println(pkt->checksum);
 }
 
 void broadcast_pkt(struct Packet* pkt, bool forward = false){
@@ -262,6 +284,7 @@ void listen_for_pkt(){
     struct Packet* recv_pkt = receive_pkt();
     
     if(recv_pkt != NULL){
+      print_pkt(recv_pkt);
       broadcast_pkt(recv_pkt, true);
       //Serial.write()
       free(recv_pkt);
@@ -298,18 +321,25 @@ void setup() {
   lora_init();
   delay(1000);
 
+  vector_timestamps[TRAFFIC_ID] = 1;
+
   struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 1");
 
   broadcast_pkt(test_pkt);
 
   free(test_pkt);
+  
 
   start_time = millis();
 }
 
 void loop() {
   if(millis() - start_time >= SERIAL_DELAY){
-    check_serial();
+    struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 1");
+    broadcast_pkt(test_pkt);
+    free(test_pkt);
+
+    // check_serial();
     start_time = millis();
   }
   else{
