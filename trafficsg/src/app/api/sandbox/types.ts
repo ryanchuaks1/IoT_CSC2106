@@ -5,7 +5,7 @@ export interface MethodTagProps {
 export interface Endpoint {
   method: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
-  description: string;
+  description?: string;
   html?: React.ReactNode;
 }
 
