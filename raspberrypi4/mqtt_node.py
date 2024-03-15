@@ -1,4 +1,3 @@
-
 import paho.mqtt.client as mqtt
 import config
 
@@ -6,6 +5,9 @@ hostname = config.ip_addr
 broker_port = config.port
 topic = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
+def cars_detected(data):
+    # Data from the object detection
+    print("Recieved data at mqtt file:", data)
 
 def on_connect(client, userdata, flags, reason_code, properties):
         print(f"Connected with result code {reason_code}")

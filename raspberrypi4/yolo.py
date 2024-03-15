@@ -1,4 +1,3 @@
-import argparse
 from collections import defaultdict
 from pathlib import Path
 
@@ -11,11 +10,12 @@ from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
 from ultralytics.utils.plotting import Annotator, colors
 
-model = YOLO("yolov8n.pt")
+from mqtt_node import cars_detected
 
-
-def count_vehicles(source) -> int:
+def count_vehicles(source, model):
     cap = cv2.VideoCapture(source)
+
+    model = YOLO(model)
 
     line_thickness = 2
     track_thickness = 2
@@ -110,9 +110,14 @@ def count_vehicles(source) -> int:
                 frame, region_label, (
                     text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, region_text_color, line_thickness
             )
-            print(region_name, region_label)
+
             cv2.polylines(frame, [polygon_coords], isClosed=True,
                           color=region_color, thickness=region_thickness)
+            
+            # print(region_name, region_label)
+            data = {region_name: region_label for region_name, region_label in zip(region_name, region_label)}
+            cars_detected(data)
+
 
         if vid_frame_count == 1:
             cv2.namedWindow("Window")
@@ -129,3 +134,5 @@ def count_vehicles(source) -> int:
     cv2.destroyAllWindows()
     cap.release()
     cv2.destroyAllWindows()
+
+
