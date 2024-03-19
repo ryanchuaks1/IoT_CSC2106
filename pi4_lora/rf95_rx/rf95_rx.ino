@@ -62,7 +62,7 @@ void lora_init(){
   }
   Serial.print(F("Set Freq to:"));
   Serial.println(RF95_FREQ);
-
+  
   // Defaults after init are 915.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
   // The default transmitter power is 13dBm, using PA_BOOST.
@@ -283,19 +283,19 @@ void broadcast_pkt(struct Packet* pkt, bool forward = false){
 
 void to_serial(struct Packet* pkt){
   uint8_t payload[PAYLOAD_LENGTH];
-  snprintf((char*)payload, sizeof(payload), pkt->payload);
+  snprintf((char*)payload, sizeof(payload), "%s", pkt->payload);
 
   for(uint8_t i = 0; i < PAYLOAD_LENGTH; i++){
     Serial.write(payload[i]);
   }
+  //Serial.print((char*)payload);
 }
 
 struct Packet* check_serial(){
   if(Serial.available()){
-    uint8_t payload[PAYLOAD_LENGTH];
-    Serial.readBytes((char*)payload, sizeof(PAYLOAD_LENGTH));
+    String payload = Serial.readStringUntil('\0');
 
-    struct Packet* pkt_buffer = generate_new_pkt(payload);
+    struct Packet* pkt_buffer = generate_new_pkt(payload.c_str());
     
     if (pkt_buffer != NULL) {
       return pkt_buffer;
@@ -313,7 +313,7 @@ void listen_for_pkt(){
     if(recv_pkt != NULL){
       print_pkt(recv_pkt);
       broadcast_pkt(recv_pkt, true);
-      //to_serial(recv_pkt);
+      to_serial(recv_pkt);
       free(recv_pkt);
     }
 
@@ -327,8 +327,8 @@ void setup() {
   Serial.begin(BAUD_RATE);
   delay(100);
 
-  // oled_init();
-  // delay(1000);
+  oled_init();
+  delay(1000);
 
   lora_init();
   delay(1000);
@@ -340,16 +340,18 @@ void setup() {
 
 void loop() {
   if(millis() - start_time >= SERIAL_DELAY){
-    // struct Packet* new_pkt = check_serial();
-    // if(new_pkt != NULL){
-    //   broadcast_pkt(new_pkt);
-    //   free(new_pkt);
-    // }
+    struct Packet* new_pkt = check_serial();
+    if(new_pkt != NULL){
+      oled_display(new_pkt->payload);
+      //broadcast_pkt(new_pkt);
+      to_serial(new_pkt);
+      free(new_pkt);
+    }
 
-    struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 2");
-    broadcast_pkt(test_pkt);
-    free(test_pkt);
-    Serial.println(F("Sent packet"));
+    // struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 2");
+    // broadcast_pkt(test_pkt);
+    // free(test_pkt);
+    // Serial.println(F("Sent packet"));
 
 
     start_time = millis();
