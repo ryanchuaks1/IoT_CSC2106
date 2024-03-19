@@ -11,6 +11,8 @@
 #define MAX_TTL 5
 #define MAX_ADJ_TRAFFIC 4
 #define MAX_TRAFFIC_IDS 256
+
+// When the difference in timestamp is >248, then we always prefer the packet that's smaller (because it will wrap back to 0 after 255)
 #define PKT_THRESHOLD 248
 
 // OLED stuff
@@ -26,17 +28,15 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define RFM95_CS 10
 #define RFM95_RST 9
 #define RFM95_INT 2
-#define TRAFFIC_ID 1
+#define TRAFFIC_ID 3
  
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 500.0
+#define RF95_FREQ 915.0
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 void(* resetFunc) (void) = 0; //declare reset function at address 0
-
-// LoRa & OLED initialization functions
 
 void lora_init(){
   // Manual reset
@@ -99,7 +99,7 @@ void oled_display(char* message){
 
 // Packet related functions
 
-uint8_t adj_traffic_ids[MAX_ADJ_TRAFFIC] = {2,3,4,5};
+uint8_t adj_traffic_ids[MAX_ADJ_TRAFFIC] = {1,6,4,5};
 uint8_t vector_timestamps[MAX_TRAFFIC_IDS] = {0};
 
 struct Packet{
@@ -308,6 +308,7 @@ struct Packet* check_serial(){
 
 void listen_for_pkt(){
   if(rf95.available()){
+    Serial.println(F("Available?"));
     struct Packet* recv_pkt = receive_pkt();
     
     if(recv_pkt != NULL){
@@ -335,28 +336,27 @@ void setup() {
 
   vector_timestamps[TRAFFIC_ID] = 1;
 
-  struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 1");
-
-  broadcast_pkt(test_pkt);
-
-  free(test_pkt);
-
   start_time = millis();
 }
 
 void loop() {
   if(millis() - start_time >= SERIAL_DELAY){
-    struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 1");
+    // struct Packet* new_pkt = check_serial();
+    // if(new_pkt != NULL){
+    //   broadcast_pkt(new_pkt);
+    //   free(new_pkt);
+    // }
+
+    struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 3");
     broadcast_pkt(test_pkt);
     free(test_pkt);
 
     Serial.println(F("Sent packet"));
 
-    // check_serial();
     start_time = millis();
   }
   else{
     listen_for_pkt();
-    delay(100);
+    delay(10);
   }
 }

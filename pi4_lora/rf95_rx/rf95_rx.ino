@@ -31,7 +31,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define TRAFFIC_ID 2
  
 // Change to 434.0 or other frequency, must match RX's freq!
-#define RF95_FREQ 500.0
+#define RF95_FREQ 915.0
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -349,10 +349,13 @@ void loop() {
     struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 2");
     broadcast_pkt(test_pkt);
     free(test_pkt);
+    Serial.println(F("Sent packet"));
+
+
     start_time = millis();
   }
   else{
     listen_for_pkt();
-    delay(100);
+    delay(10);
   }
 }
