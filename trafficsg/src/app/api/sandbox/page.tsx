@@ -8,6 +8,7 @@ import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+const serverWsUrl = process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:3000";
 
 export default function Sandbox() {
   const [trafficData, setTrafficData] = useState<any[]>([]);
@@ -33,10 +34,25 @@ export default function Sandbox() {
 
   useEffect(() => {
     loadTrafficData();
+  
+    // Connect to WebSocket server
+    const ws = new WebSocket(serverWsUrl);
+  
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
     };
+  
+    ws.onmessage = (event) => {
+      console.log('Message from server:', event.data);
       loadTrafficData();
     };
+  
+    ws.onerror = (error) => {
+      console.error('WebSocket error: ', error);
+    };
+  
     return () => {
+      ws.close();
     };
   }, []);
 
@@ -71,6 +87,7 @@ export default function Sandbox() {
   return (
     <main className="flex min-h-screen flex-col items-center p-24">
       <div className="container p-4">
+        <h1 className="text-xl font-bold m-2">Real-Time Traffic Data (WS)</h1>
         {trafficData.length === 0 && (
           <p className="bg-white text-center font-bold p-4">No data available.</p>
         )}
