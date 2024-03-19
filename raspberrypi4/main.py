@@ -10,16 +10,12 @@ def install_dependencies():
     subprocess.run(["pip", "install", "-r", requirements_file])
 
 
-def startYOLOModel(source) -> str:
-    count_vehicles(source)
-    vehicle_count = {
+def startYOLOModel(source):
+    count_vehicles(source, "yolov8n.pt")
 
-    }
-
-    vehicle_count_json = json.dumps(vehicle_count)
-
-    return vehicle_count_json
-
+def send_data(data):
+    # Function to send data (You can implement the logic to send data here)
+    print("Recieved data at main:", data)
 
 def main():
     # install_dependencies()

@@ -3,3 +3,5 @@ opencv_python==4.9.0.80
 opencv_python_headless==4.9.0.80
 Shapely==2.0.2
 ultralytics==8.1.0
+paho_mqtt==paho.mqtt-2.0.0
+```
