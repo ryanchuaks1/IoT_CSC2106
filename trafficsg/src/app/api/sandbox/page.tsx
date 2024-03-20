@@ -2,17 +2,16 @@
 
 // Import React libraries
 import React, { useEffect, useState } from "react";
-import { Client as MQTTClient } from "paho-mqtt";
 
 // Import user-defined files
 import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+const serverWsUrl = process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:3000";
 
 export default function Sandbox() {
   const [trafficData, setTrafficData] = useState<any[]>([]);
-  const [client, setClient] = useState<MQTTClient | null>(null);
 
   // Function to fetch traffic data
   const fetchTrafficData = async () => {
@@ -34,38 +33,26 @@ export default function Sandbox() {
   };
 
   useEffect(() => {
-    // Fetch traffic data on component mount
     loadTrafficData();
-
-    // Set up MQTT client
-    const mqttClient = new MQTTClient("broker.hivemq.com", 8000, "TrafficSG");
-
-    mqttClient.onConnectionLost = (responseObject) => {
-      if (responseObject.errorCode !== 0) {
-        console.log("MQTT Connection Lost:", responseObject.errorMessage);
-      }
+  
+    // Connect to WebSocket server
+    const ws = new WebSocket(serverWsUrl);
+  
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
     };
-
-    mqttClient.onMessageArrived = (message) => {
-      console.log("MQTT Message Arrived:", message.payloadString);
+  
+    ws.onmessage = (event) => {
+      console.log('Message from server:', event.data);
       loadTrafficData();
     };
-
-    mqttClient.connect({
-      onSuccess: () => {
-        console.log("Connected to broker");
-        mqttClient.subscribe("trafficsg/traffic-data/changes");
-      },
-    });
-
-    // Set the MQTT Client state
-    setClient(mqttClient);
-
-    // Clean up connection on component unmount
+  
+    ws.onerror = (error) => {
+      console.error('WebSocket error: ', error);
+    };
+  
     return () => {
-      if (mqttClient) {
-        mqttClient.disconnect();
-      }
+      ws.close();
     };
   }, []);
 
@@ -100,7 +87,7 @@ export default function Sandbox() {
   return (
     <main className="flex min-h-screen flex-col items-center p-24">
       <div className="container p-4">
-        <h1 className="text-xl font-bold m-2">Real-Time Traffic Data (MQTT)</h1>
+        <h1 className="text-xl font-bold m-2">Real-Time Traffic Data (WS)</h1>
         {trafficData.length === 0 && (
           <p className="bg-white text-center font-bold p-4">No data available.</p>
         )}

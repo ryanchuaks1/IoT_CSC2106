@@ -1,7 +1,6 @@
 // Import dependencies
 const express = require("express");
 const { ObjectId } = require("mongodb");
-const mqttClient = require("../services/mqtt");
 const { getDB } = require("../services/mongodb");
 
 const trafficDataRoutes = express.Router();
@@ -42,9 +41,6 @@ trafficDataRoutes.post("/", async (req, res) => {
   try {
     // Insert traffic data into the database
     const result = await trafficDataCollection.insertMany(trafficData);
-
-    // Publish a message to the MQTT topic after successful insertion
-    mqttClient.publish('trafficsg/traffic-data/changes', JSON.stringify({ action: 'add', data: trafficData }));
 
     res
       .status(201)
@@ -107,9 +103,6 @@ trafficDataRoutes.put("/:object_id", async (req, res) => {
       }
     );
 
-    // Publish a message to the MQTT topic after successful update
-    mqttClient.publish('trafficsg/traffic-data/changes', JSON.stringify({ action: 'update', data: trafficData }));
-
     res
       .status(201)
       .json({ result: true, message: "Traffic data updated successfully!" });
@@ -131,9 +124,6 @@ trafficDataRoutes.delete("/:object_id", async (req, res) => {
     const deleteResult = await trafficDataCollection.deleteOne({
       _id: ObjectId(objectId),
     });
-
-    // Publish a message to the MQTT topic after successful deletion
-    mqttClient.publish('trafficsg/traffic-data/changes', JSON.stringify({ action: 'delete', data: objectId }));
 
     res
       .status(201)
