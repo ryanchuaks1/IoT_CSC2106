@@ -10,7 +10,7 @@ export default function Header() {
         href={"/api/sandbox"}
         className="p-2 border-2 rounded-md hover:bg-slate-100"
       >
-        Api Sandbox
+        API Sandbox
       </Link>
     </div>
   );
