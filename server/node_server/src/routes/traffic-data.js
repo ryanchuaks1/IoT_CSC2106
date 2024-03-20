@@ -8,7 +8,7 @@ const trafficDataRoutes = express.Router();
 // Get all traffic data
 trafficDataRoutes.get("/", async (req, res) => {
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("trafficdata");
+  const trafficDataCollection = mongodbClient.collection("traffic_data");
 
   try {
     // Get all traffic data from the database
@@ -26,7 +26,7 @@ trafficDataRoutes.post("/", async (req, res) => {
   let trafficData = req.body.traffic_data;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("trafficdata");
+  const trafficDataCollection = mongodbClient.collection("traffic_data");
 
   // Check if trafficData is an array or a single object
   if (!Array.isArray(trafficData)) {
@@ -56,7 +56,7 @@ trafficDataRoutes.get("/:traffic_id", async (req, res) => {
   const trafficId = req.params.traffic_id;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("trafficdata");
+  const trafficDataCollection = mongodbClient.collection("traffic_data");
 
   try {
     let query = {};
@@ -87,7 +87,7 @@ trafficDataRoutes.put("/:object_id", async (req, res) => {
   const trafficData = req.body.traffic_data;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("trafficdata");
+  const trafficDataCollection = mongodbClient.collection("traffic_data");
 
   try {
     // Update traffic data in the database
@@ -117,7 +117,7 @@ trafficDataRoutes.delete("/:object_id", async (req, res) => {
   const objectId = req.params.object_id;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("trafficdata");
+  const trafficDataCollection = mongodbClient.collection("traffic_data");
 
   try {
     // Delete traffic data from the database
