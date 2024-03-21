@@ -119,23 +119,24 @@ trafficDataRoutes.get("/:traffic_id", async (req, res) => {
   }
 });
 
-// Update traffic data by `object_id`
-trafficDataRoutes.put("/:object_id", async (req, res) => {
+// Update traffic data by `object_id` in `traffic_id` collection
+trafficDataRoutes.put("/:traffic_id/:object_id", async (req, res) => {
+  const trafficId = req.params.traffic_id;
   const objectId = req.params.object_id;
   const trafficData = req.body.traffic_data;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("traffic_data");
+  const trafficIdCollection = mongodbClient.collection("traffic_" + trafficId);
 
   try {
     // Update traffic data in the database
-    const updateResult = await trafficDataCollection.updateOne(
+    const updateResult = await trafficIdCollection.updateOne(
       { _id: ObjectId(objectId) },
       {
         $set: {
           lane_direction: trafficData.lane_direction,
           number_of_vehicles: trafficData.number_of_vehicles,
-          isEmergency: trafficData.isEmergency,
+          is_emergency: trafficData.is_emergency,
           timestamp: new Date(),
         },
       }
