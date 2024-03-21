@@ -1,32 +1,29 @@
 **INSTALLATION FOR PI1**
-
 | Command | Description |
 | --- | --- |
-|sudo apt-get update|
-|sudo apt-get upgrade|
-|sudo apt-get install hostapd|
-|sudo apt-get install dnsmasq|
-|sudo apt-get install netfilter-persistent|
-|sudo apt install python3-pip|
-|sudo apt install -y mosquitto mosquitto-clients|
-|pip3 install paho-mqtt|
+|sudo apt-get update|Update the package lists for upgrades and installations.|
+|sudo apt-get upgrade|Upgrade all installed packages to their latest versions.|
+|sudo apt-get install hostapd|Install the HostAP daemon for creating a wireless access point.|
+|sudo apt-get install dnsmasq|Install DNSMasq for a lightweight DNS and DHCP server.|
+|sudo apt-get install netfilter-persistent|Install Netfilter Persistent for saving and restoring firewall rules.|
+|sudo apt install python3-pip|Install Python 3 package manager, pip.|
+|sudo apt install -y mosquitto mosquitto-clients|Install the Mosquitto MQTT broker and its command-line clients.|
+|pip3 install paho-mqtt|Install the Paho MQTT client library for Python 3.|
 
 **INSTALLATION FOR PI2**
-
 | Command | Description |
 | --- | --- |
-|sudo apt-get update|
-|sudo apt-get upgrade|
-|sudo apt install python3-pip|
-|sudo apt install -y mosquitto mosquitto-clients|
-|pip3 install paho-mqtt|
+|sudo apt-get update|Update the package lists for upgrades and installations.|
+|sudo apt-get upgrade|Upgrade all installed packages to their latest versions.|
+|sudo apt install python3-pip|Install Python 3 package manager, pip.|
+|sudo apt install -y mosquitto mosquitto-clients|Install the Mosquitto MQTT broker and its command-line clients.|
+|pip3 install paho-mqtt|Install the Paho MQTT client library for Python 3.|
 
 
 **MOSQUITTO CONFIGURATION**
 | Command | Description |
 | --- | --- |
-|sudo nano /etc/mosquitto/mosquitto.conf|
-
+|sudo nano /etc/mosquitto/mosquitto.conf|Edit the Mosquitto configuration file.|
 ```
 per_listener_settings true
 
@@ -47,19 +44,16 @@ password_file /etc/mosquitto/passwd
 
 | Command | Description |
 | --- | --- |
-|sudo systemctl enable mosquitto.service|
-|sudo rfkill list|
-|sudo rfkill unblock wifi|
-|mosquitto -d|
-|sudo ufw enable|
-|sudo ufw allow 22|
-|sudo ufw allow 1883/tcp|
+|sudo systemctl enable mosquitto.service|Enable the Mosquitto MQTT broker service.|
+|sudo rfkill list|List all the wireless devices.|
+|sudo rfkill unblock wifi|Unblock the WiFi device.|
+|mosquitto -d|Start the Mosquitto MQTT broker in the background.|
 
 **ACCESS POINT CONFIGURATION**
-|sudo systemctl stop hostapd|
-|sudo systemctl stop dnsmasq|
-|sudo service dhcpcd stop|
-|sudo nano /etc/dhcpcd.conf|
+|sudo systemctl stop hostapd|Stop HostAP daemon temporarily.|
+|sudo systemctl stop dnsmasq|Stop DNSMasq service temporarily.|
+|sudo service dhcpcd stop|Stop DHCP client daemon temporarily.|
+|sudo nano /etc/dhcpcd.conf|Edit DHCP client configuration file.|
 ```
 interface wlan0
     static ip_address=10.20.1.1/24
@@ -68,8 +62,7 @@ interface wlan0
 
 | Command | Description |
 | --- | --- |
-|sudo nano /etc/dnsmasq.conf|
-
+|sudo nano /etc/dnsmasq.conf|Edit DNSMasq configuration file.|
 ```
 interface=wlan0
 dhcp-range=10.20.1.2,10.20.1.20,255.255.255.0,24h
@@ -77,8 +70,7 @@ dhcp-range=10.20.1.2,10.20.1.20,255.255.255.0,24h
 
 | Command | Description |
 | --- | --- |
-|sudo nano /etc/hostapd/hostapd.conf|
-
+|sudo nano /etc/hostapd/hostapd.conf|Edit HostAP daemon configuration file.|
 ```
 country_code=SG
 interface=wlan0
@@ -94,8 +86,7 @@ wpa_passphrase=<PASSWORD>
 
 | Command | Description |
 | --- | --- |
-|sudo nano /etc/default/hostapd|
-
+|sudo nano /etc/default/hostapd|Edit HostAP daemon default configuration file.|
 ```
 #DAEMON_CONF=""
 to
@@ -104,7 +95,7 @@ DAEMON_CONF="/etc/hostapd/hostapd.conf"
 
 | Command | Description |
 | --- | --- |
-|sudo nano /etc/sysctl.conf|
+|sudo nano /etc/sysctl.conf|Edit system control configuration file.|
 
 ```
 #net.ipv4.ip_forward=1
@@ -114,14 +105,22 @@ net.ipv4.ip_forward=1
 
 | Command | Description |
 | --- | --- |
-|sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE|
-|sudo netfilter-persistent save|
+|sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE|Configure NAT to allow internet access through the Ethernet interface.|
+|sudo netfilter-persistent save|Save current firewall rules.|
 
-|sudo systemctl unmask hostapd|
-|sudo systemctl enable hostapd|
-|sudo systemctl start hostapd|
-|sudo systemctl enable dnsmasq|
-|sudo systemctl start dnsmasq|
-|sudo systemctl enable dhcpcd|
-|sudo systemctl start dhcpcd|
+**ENABLE ALL SERVICES**
+| Command | Description |
+| --- | --- |
+|sudo systemctl unmask hostapd|Unmask hostAP daemon service.|
+|sudo systemctl enable hostapd|Enable HostAP daemon service to start on boot.|
+|sudo systemctl enable dnsmasq|Enable DNSMasq service to start on boot.|
+|sudo systemctl enable dhcpcd|Enable DHCP client daemon to start on boot.|
+|sudo systemctl enable mosquitto|Enable Mosquitto service to start on boot.|
+|sudo systemctl start hostapd|Start HostAP daemon service.|
+|sudo systemctl start dnsmasq|Start DNSMasq service.|
+|sudo systemctl start dhcpcd|Start DHCP client daemon service.|
+|sudo systemctl start mosquitto|Start Mosquitto service.|
+
+
+
 
