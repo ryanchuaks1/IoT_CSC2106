@@ -55,24 +55,31 @@ password_file /etc/mosquitto/passwd
 |sudo ufw allow 22|
 |sudo ufw allow 1883/tcp|
 
-
-sudo systemctl stop hostapd
-sudo systemctl stop dnsmasq
-sudo service dhcpcd stop
-
-sudo nano /etc/dhcpcd.conf
-
+**ACCESS POINT CONFIGURATION**
+|sudo systemctl stop hostapd|
+|sudo systemctl stop dnsmasq|
+|sudo service dhcpcd stop|
+|sudo nano /etc/dhcpcd.conf|
+```
 interface wlan0
     static ip_address=10.20.1.1/24
     nohook wpa_supplicant
+```
 
-sudo nano /etc/dnsmasq.conf
+| Command | Description |
+| --- | --- |
+|sudo nano /etc/dnsmasq.conf|
 
+```
 interface=wlan0
 dhcp-range=10.20.1.2,10.20.1.20,255.255.255.0,24h
+```
 
-sudo nano /etc/hostapd/hostapd.conf
+| Command | Description |
+| --- | --- |
+|sudo nano /etc/hostapd/hostapd.conf|
 
+```
 country_code=SG
 interface=wlan0
 channel=9
@@ -83,27 +90,38 @@ wpa_pairwise=TKIP CCMP
 rsn_pairwise=CCMP
 ssid=<SSID>
 wpa_passphrase=<PASSWORD>
+```
 
-sudo nano /etc/default/hostapd
+| Command | Description |
+| --- | --- |
+|sudo nano /etc/default/hostapd|
 
+```
 #DAEMON_CONF=""
 to
 DAEMON_CONF="/etc/hostapd/hostapd.conf"
+```
 
-sudo nano /etc/sysctl.conf
+| Command | Description |
+| --- | --- |
+|sudo nano /etc/sysctl.conf|
 
+```
 #net.ipv4.ip_forward=1
 to
 net.ipv4.ip_forward=1
+```
 
-sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE
-sudo netfilter-persistent save
+| Command | Description |
+| --- | --- |
+|sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE|
+|sudo netfilter-persistent save|
 
-sudo systemctl unmask hostapd
-sudo systemctl enable hostapd
-sudo systemctl start hostapd
-sudo systemctl enable dnsmasq
-sudo systemctl start dnsmasq
-sudo systemctl enable dhcpcd
-sudo systemctl start dhcpcd
+|sudo systemctl unmask hostapd|
+|sudo systemctl enable hostapd|
+|sudo systemctl start hostapd|
+|sudo systemctl enable dnsmasq|
+|sudo systemctl start dnsmasq|
+|sudo systemctl enable dhcpcd|
+|sudo systemctl start dhcpcd|
 
