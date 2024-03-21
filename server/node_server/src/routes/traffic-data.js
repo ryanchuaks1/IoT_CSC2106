@@ -14,6 +14,9 @@ trafficDataRoutes.get("/", async (req, res) => {
     // Get all traffic data from the database
     const allTrafficData = await trafficDataCollection.find().toArray();
 
+    // Sort traffic data by `updated_at` in descending order
+    allTrafficData.sort((a, b) => b.updated_at - a.updated_at);
+
     res.status(200).json(allTrafficData);
   } catch (error) {
     console.error("Error getting all traffic data:", error);
@@ -99,6 +102,9 @@ trafficDataRoutes.get("/:traffic_id", async (req, res) => {
   try {
     // Get traffic data from the database
     const allTrafficData = await trafficIdCollection.find().toArray();
+
+    // Sort traffic data by `timestamp` in descending order
+    allTrafficData.sort((a, b) => b.timestamp - a.timestamp);
 
     if (allTrafficData.length > 0) {
       res.status(200).json(allTrafficData);
