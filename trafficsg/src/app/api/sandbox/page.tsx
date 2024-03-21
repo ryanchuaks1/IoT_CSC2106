@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 
 // Import user-defined files
 import { Endpoint } from "./types";
+import Header from "@/app/component/header";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
@@ -93,50 +94,55 @@ export default function Sandbox() {
   ];
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-24">
-      <div className="container p-4">
-        <h1 className="text-xl font-bold m-2">Real-Time Traffic Data (WS)</h1>
-        {trafficData.length === 0 && (
-          <p className="bg-white text-center font-bold p-4">No data available.</p>
-        )}
-        {trafficData.length > 0 && (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                {/* Dynamically generate table headers based on trafficData keys */}
-                {Object.keys(trafficData[0]).map((key) => (
-                  <th
-                    key={key}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    {key}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {/* Dynamically populate table rows */}
-              {trafficData.map((data, idx) => (
-                <tr key={idx}>
-                  {Object.values(data).map((value: any, valueIdx) => (
-                    <td
-                      key={valueIdx}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+    <main className="min-h-screen min-w-screen">
+      <Header />
+      <div className="flex flex-col items-center p-24 pt-5">
+        <div className="container p-4">
+          <h1 className="text-xl font-bold m-2">Real-Time Traffic Data (WS)</h1>
+          {trafficData.length === 0 && (
+            <p className="bg-white text-center font-bold p-4">
+              No data available.
+            </p>
+          )}
+          {trafficData.length > 0 && (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  {/* Dynamically generate table headers based on trafficData keys */}
+                  {Object.keys(trafficData[0]).map((key) => (
+                    <th
+                      key={key}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      {value.toString()}
-                    </td>
+                      {key}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-      <div className="container mx-auto p-4">
-        <h1 className="text-xl font-bold m-2">Traffic Data API</h1>
-        {trafficDataEndpoints.map((trafficDataEndpoint, index) => (
-          <EndpointListItem key={index} {...trafficDataEndpoint} />
-        ))}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {/* Dynamically populate table rows */}
+                {trafficData.map((data, idx) => (
+                  <tr key={idx}>
+                    {Object.values(data).map((value: any, valueIdx) => (
+                      <td
+                        key={valueIdx}
+                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                      >
+                        {value.toString()}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="container mx-auto p-4">
+          <h1 className="text-xl font-bold m-2">Traffic Data API</h1>
+          {trafficDataEndpoints.map((trafficDataEndpoint, index) => (
+            <EndpointListItem key={index} {...trafficDataEndpoint} />
+          ))}
+        </div>
       </div>
     </main>
   );
