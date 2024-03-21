@@ -28,19 +28,57 @@ trafficDataRoutes.post("/", async (req, res) => {
   const mongodbClient = getDB();
   const trafficDataCollection = mongodbClient.collection("traffic_data");
 
+  // Get same timestamp for all traffic data in request
+  const currentTime = new Date();
+
   // Check if trafficData is an array or a single object
   if (!Array.isArray(trafficData)) {
     trafficData = [trafficData];
   }
 
+  // Check for missing `traffic_id` in traffic data
+  const missingTrafficId = trafficData.some(
+    (data) => data.traffic_id === undefined
+  );
+  if (missingTrafficId) {
+    res.status(400).json({
+      result: false,
+      message: "Traffic ID is required for all traffic data",
+    });
+  }
+
   // Add timestamp for each traffic data
   trafficData = trafficData.map((data) => {
-    return { ...data, timestamp: new Date() };
+    return { ...data, timestamp: currentTime };
   });
 
   try {
-    // Insert traffic data into the database
-    const result = await trafficDataCollection.insertMany(trafficData);
+    await Promise.all(trafficData.map(async (data) => {
+      // Check if `traffic_id` already exists in the database
+      const existingTrafficData = await trafficDataCollection.findOne({
+        traffic_id: data.traffic_id,
+      });
+
+      if (existingTrafficData) {
+        // Update `timestamp` for existing `traffic_data` record
+        operationResult = await trafficDataCollection.updateOne(
+          { traffic_id: data.traffic_id },
+          { $set: { updated_at: currentTime } }
+        );
+      } else {
+        // Insert `traffic_id` record into `traffic_data` collection
+        operationResult = await trafficDataCollection.insertOne({
+          traffic_id: data.traffic_id,
+          updated_at: currentTime,
+        });
+      }
+
+      // Add traffic data into `traffic_id` collection
+      const trafficIdCollection = mongodbClient.collection(
+        "traffic_" + data.traffic_id
+      );
+      await trafficIdCollection.insertOne(data);
+    }));
 
     res
       .status(201)
