@@ -8,7 +8,7 @@ import { Endpoint } from "./types";
 import { EndpointListItem } from "./Components/EndpointListItem";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
-const serverWsUrl = process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:3000";
+const serverWsUrl = process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:5000";
 
 export default function Sandbox() {
   const [trafficData, setTrafficData] = useState<any[]>([]);
@@ -34,23 +34,23 @@ export default function Sandbox() {
 
   useEffect(() => {
     loadTrafficData();
-  
+
     // Connect to WebSocket server
     const ws = new WebSocket(serverWsUrl);
-  
+
     ws.onopen = () => {
-      console.log('Connected to WebSocket server');
+      console.log("Connected to WebSocket server");
     };
-  
+
     ws.onmessage = (event) => {
-      console.log('Message from server:', event.data);
+      console.log("Message from server:", event.data);
       loadTrafficData();
     };
-  
+
     ws.onerror = (error) => {
-      console.error('WebSocket error: ', error);
+      console.error("WebSocket error: ", error);
     };
-  
+
     return () => {
       ws.close();
     };
@@ -75,12 +75,20 @@ export default function Sandbox() {
     {
       method: "PUT",
       path: "/api/traffic-data/traffic_id/object_id",
-      description: "Update a traffic data (Replace `traffic_id` and `object_id` with `_id`)",
+      description:
+        "Update a traffic data (Replace `traffic_id` and `object_id` with `_id`)",
+    },
+    {
+      method: "DELETE",
+      path: "/api/traffic-data/traffic_id",
+      description:
+        "Delete a traffic junction data (Replace `traffic_id`)",
     },
     {
       method: "DELETE",
       path: "/api/traffic-data/traffic_id/object_id",
-      description: "Delete a traffic data (Replace `traffic_id` and `object_id` with `_id`)",
+      description:
+        "Delete a traffic data (Replace `traffic_id` and `object_id` with `_id`)",
     },
   ];
 

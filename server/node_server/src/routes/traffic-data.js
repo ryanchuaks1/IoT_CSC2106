@@ -151,7 +151,33 @@ trafficDataRoutes.put("/:traffic_id/:object_id", async (req, res) => {
   }
 });
 
-// Delete traffic data by `object_id`
+// Delete traffic junction data by `traffic_id`
+trafficDataRoutes.delete("/:traffic_id", async (req, res) => {
+  const trafficId = req.params.traffic_id;
+
+  const mongodbClient = getDB();
+  const trafficDataCollection = mongodbClient.collection("traffic_data");
+  const trafficIdCollection = mongodbClient.collection("traffic_" + trafficId);
+
+  try {
+    // Delete traffic junction data from the database
+    await trafficDataCollection.deleteOne({
+      traffic_id: trafficId,
+    });
+
+    // Delete traffic data collection from the database
+    await trafficIdCollection.drop();
+
+    res
+      .status(201)
+      .json({ result: true, message: "Traffic data deleted successfully!" });
+  } catch (error) {
+    console.error("Error deleting traffic data:", error);
+    res.status(500).json({ result: false, message: "Internal server error" });
+  }
+});
+
+// Delete traffic data by `traffic_id` and `object_id`
 trafficDataRoutes.delete("/:traffic_id/:object_id", async (req, res) => {
   const trafficId = req.params.traffic_id;
   const objectId = req.params.object_id;
