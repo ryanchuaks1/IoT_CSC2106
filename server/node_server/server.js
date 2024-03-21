@@ -32,7 +32,7 @@ connectDB()
     const mongodbClient = getDB();
 
     // Watch for changes in the `trafficdata` collection
-    const trafficDataCollection = mongodbClient.collection("trafficdata");
+    const trafficDataCollection = mongodbClient.collection("traffic_data");
     const trafficDataChangeStream = trafficDataCollection.watch();
     trafficDataChangeStream.on("change", (change) => {
       wss.clients.forEach((client) => {

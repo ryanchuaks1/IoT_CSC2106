@@ -74,13 +74,13 @@ export default function Sandbox() {
     },
     {
       method: "PUT",
-      path: "/api/traffic-data/:object_id",
-      description: "Update a traffic data (Replace `object_id` with `_id`)",
+      path: "/api/traffic-data/traffic_id/object_id",
+      description: "Update a traffic data (Replace `traffic_id` and `object_id` with `_id`)",
     },
     {
       method: "DELETE",
-      path: "/api/traffic-data/:object_id",
-      description: "Delete a traffic data (Replace `object_id` with `_id`)",
+      path: "/api/traffic-data/traffic_id/object_id",
+      description: "Delete a traffic data (Replace `traffic_id` and `object_id` with `_id`)",
     },
   ];
 
