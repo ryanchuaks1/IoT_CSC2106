@@ -152,15 +152,16 @@ trafficDataRoutes.put("/:traffic_id/:object_id", async (req, res) => {
 });
 
 // Delete traffic data by `object_id`
-trafficDataRoutes.delete("/:object_id", async (req, res) => {
+trafficDataRoutes.delete("/:traffic_id/:object_id", async (req, res) => {
+  const trafficId = req.params.traffic_id;
   const objectId = req.params.object_id;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("traffic_data");
+  const trafficIdCollection = mongodbClient.collection("traffic_" + trafficId);
 
   try {
     // Delete traffic data from the database
-    const deleteResult = await trafficDataCollection.deleteOne({
+    const deleteResult = await trafficIdCollection.deleteOne({
       _id: ObjectId(objectId),
     });
 
