@@ -1,3 +1,4 @@
+// Import user-defined files
 import Link from "next/link";
 
 export default function Header() {
@@ -9,7 +10,7 @@ export default function Header() {
       >
         Traffic <span className="text-primary">SG</span>
       </Link>
-      
+
       <nav className="flex">
         <Link
           href={"/traffic"}

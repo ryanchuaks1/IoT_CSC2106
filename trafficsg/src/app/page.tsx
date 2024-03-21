@@ -1,6 +1,7 @@
-import Barchart from "./component/barchart";
-import Header from "./component/header";
-import { Endpoint } from "./api/sandbox/types";
+// Import user-defined files
+import Header from "@/app/component/header";
+import Barchart from "@/app/component/barchart";
+import { Endpoint } from "@/app/api/sandbox/types";
 
 export default function Home() {
   return (

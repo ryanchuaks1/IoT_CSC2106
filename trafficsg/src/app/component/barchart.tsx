@@ -1,5 +1,6 @@
 "use client";
 
+// Import React libraries
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,7 +11,9 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Endpoint } from "../api/sandbox/types";
+
+// Import user-defined files
+import { Endpoint } from "@/app/api/sandbox/types";
 
 ChartJS.register(
   CategoryScale,
@@ -61,16 +64,18 @@ export default function Barchart({
     datasets.push({
       label: dataDescription[i],
       data: dataPoints.map(() => getRandomNumber(0, 1000)),
-      backgroundColor: `rgba(${getRandomNumber(0, 255)}, ${getRandomNumber(0, 255)}, ${getRandomNumber(0, 255)}, 0.5)`,
+      backgroundColor: `rgba(${getRandomNumber(0, 255)}, ${getRandomNumber(
+        0,
+        255
+      )}, ${getRandomNumber(0, 255)}, 0.5)`,
     });
   }
-  
+
   const labels = dataPoints; // Assuming dataPoints is defined somewhere
   const data = {
     labels,
     datasets,
   };
-
 
   return (
     <div className={`m-4 p-1 border border-primary flex-auto ${chartWidth}`}>
