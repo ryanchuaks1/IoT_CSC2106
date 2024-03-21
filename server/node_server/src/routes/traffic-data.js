@@ -94,17 +94,11 @@ trafficDataRoutes.get("/:traffic_id", async (req, res) => {
   const trafficId = req.params.traffic_id;
 
   const mongodbClient = getDB();
-  const trafficDataCollection = mongodbClient.collection("traffic_data");
+  const trafficIdCollection = mongodbClient.collection("traffic_" + trafficId);
 
   try {
-    let query = {};
-
-    if (trafficId) {
-      query = { traffic_id: trafficId };
-    }
-
     // Get traffic data from the database
-    const allTrafficData = await trafficDataCollection.find(query).toArray();
+    const allTrafficData = await trafficIdCollection.find().toArray();
 
     if (allTrafficData.length > 0) {
       res.status(200).json(allTrafficData);
