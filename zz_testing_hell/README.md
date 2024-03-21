@@ -4,19 +4,19 @@
 | --- | --- |
 |sudo apt-get update|
 |sudo apt-get upgrade|
-
 |sudo apt-get install hostapd|
 |sudo apt-get install dnsmasq|
 |sudo apt-get install netfilter-persistent|
-
 |sudo apt install python3-pip|
 |sudo apt install -y mosquitto mosquitto-clients|
 |pip3 install paho-mqtt|
 
 **INSTALLATION FOR PI2**
+
+| Command | Description |
+| --- | --- |
 |sudo apt-get update|
 |sudo apt-get upgrade|
-
 |sudo apt install python3-pip|
 |sudo apt install -y mosquitto mosquitto-clients|
 |pip3 install paho-mqtt|
@@ -45,18 +45,15 @@ allow_anonymous true
 password_file /etc/mosquitto/passwd
 ```
 
+| Command | Description |
+| --- | --- |
 |sudo systemctl enable mosquitto.service|
-
 |sudo rfkill list|
 |sudo rfkill unblock wifi|
-
 |mosquitto -d|
-
 |sudo ufw enable|
 |sudo ufw allow 22|
 |sudo ufw allow 1883/tcp|
-
-
 
 
 sudo systemctl stop hostapd
