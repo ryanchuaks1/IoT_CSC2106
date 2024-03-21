@@ -5,7 +5,6 @@
 |sudo apt-get upgrade|Upgrade all installed packages to their latest versions.|
 |sudo apt-get install hostapd|Install the HostAP daemon for creating a wireless access point.|
 |sudo apt-get install dnsmasq|Install DNSMasq for a lightweight DNS and DHCP server.|
-|sudo apt-get install netfilter-persistent|Install Netfilter Persistent for saving and restoring firewall rules.|
 |sudo apt install python3-pip|Install Python 3 package manager, pip.|
 |sudo apt install -y mosquitto mosquitto-clients|Install the Mosquitto MQTT broker and its command-line clients.|
 |pip3 install paho-mqtt|Install the Paho MQTT client library for Python 3.|
@@ -102,11 +101,6 @@ DAEMON_CONF="/etc/hostapd/hostapd.conf"
 to
 net.ipv4.ip_forward=1
 ```
-
-| Command | Description |
-| --- | --- |
-|sudo iptables -t nat -A  POSTROUTING -o eth0 -j MASQUERADE|Configure NAT to allow internet access through the Ethernet interface.|
-|sudo netfilter-persistent save|Save current firewall rules.|
 
 **ENABLE ALL SERVICES**
 | Command | Description |
