@@ -1,30 +1,33 @@
 **INSTALLATION FOR PI1**
-sudo apt-get update
-sudo apt-get upgrade
 
-sudo apt-get install hostapd
-sudo apt-get install dnsmasq
-sudo apt-get install netfilter-persistent
+| Command | Description |
+| --- | --- |
+|sudo apt-get update|
+|sudo apt-get upgrade|
 
-sudo apt install python3-pip
-sudo apt install -y mosquitto mosquitto-clients
-pip3 install paho-mqtt
+|sudo apt-get install hostapd|
+|sudo apt-get install dnsmasq|
+|sudo apt-get install netfilter-persistent|
+
+|sudo apt install python3-pip|
+|sudo apt install -y mosquitto mosquitto-clients|
+|pip3 install paho-mqtt|
 
 **INSTALLATION FOR PI2**
-sudo apt-get update
-sudo apt-get upgrade
+|sudo apt-get update|
+|sudo apt-get upgrade|
 
-sudo apt install python3-pip
-sudo apt install -y mosquitto mosquitto-clients
-pip3 install paho-mqtt
+|sudo apt install python3-pip|
+|sudo apt install -y mosquitto mosquitto-clients|
+|pip3 install paho-mqtt|
 
 
 **MOSQUITTO CONFIGURATION**
 | Command | Description |
 | --- | --- |
-sudo nano /etc/mosquitto/mosquitto.conf
+|sudo nano /etc/mosquitto/mosquitto.conf|
 
-***************************************
+```
 per_listener_settings true
 
 pid_file /run/mosquitto/mosquitto.pid
@@ -40,30 +43,21 @@ bind_address 10.20.1.1
 listener 1883 0.0.0.0
 allow_anonymous true
 password_file /etc/mosquitto/passwd
-***************************************
+```
 
-sudo systemctl enable mosquitto.service
+|sudo systemctl enable mosquitto.service|
 
-sudo rfkill list
-sudo rfkill unblock wifi
+|sudo rfkill list|
+|sudo rfkill unblock wifi|
 
-mosquitto -d
+|mosquitto -d|
 
-sudo ufw enable
-sudo ufw allow 22
-sudo ufw allow 1883/tcp
+|sudo ufw enable|
+|sudo ufw allow 22|
+|sudo ufw allow 1883/tcp|
 
-********************************************************************************************************************************************************************************************************
-sudo apt-get update
-sudo apt-get upgrade
 
-sudo apt-get install hostapd
-sudo apt-get install dnsmasq
-sudo apt-get install netfilter-persistent
 
-sudo apt install python3-pip
-sudo apt install -y mosquitto mosquitto-clients
-pip3 install paho-mqtt
 
 sudo systemctl stop hostapd
 sudo systemctl stop dnsmasq
