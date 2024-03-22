@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import config
 import threading
 import time
+from yolo import count_vehicles
 
 hostname = config.ip_addr
 broker_port = config.port
@@ -14,15 +15,11 @@ def on_connect(client, userdata, flags, reason_code, properties):
 def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.payload))
 
-def on_publish(client, userdata):
-    print("Message published")
-
 def initialise_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
     client.on_connect = on_connect
     client.on_message = on_message
-    client.on_publish = on_publish
 
     client.connect(hostname, broker_port, 60)
     return client
@@ -34,16 +31,13 @@ def mqtt_transmission():
         client.publish(topic, "Message sent")
         time.sleep(5)
 
-def increment_and_print():
-    x = 0
+def yolov8_task():
     while True:
-        x += 1
-        print(f"x: {x}")
-        time.sleep(1)
+        count_vehicles("traffic.mp4", "yolov8n.pt")
 
 def main():
     threading.Thread(target=mqtt_transmission, daemon=True).start()
-    threading.Thread(target=increment_and_print, daemon=True).start()
+    threading.Thread(target=yolov8_task, daemon=True).start()
 
 if __name__ == "__main__":
     main()
