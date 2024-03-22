@@ -4,12 +4,6 @@ from typing import Dict
 
 from yolo import count_vehicles
 
-
-def install_dependencies():
-    requirements_file = "requirements.txt"
-    subprocess.run(["pip", "install", "-r", requirements_file])
-
-
 def startYOLOModel(source):
     count_vehicles(source, "yolov8n.pt")
 
@@ -18,7 +12,6 @@ def send_data(data):
     print("Recieved data at main:", data)
 
 def main():
-    # install_dependencies()
     startYOLOModel("traffic.mp4")
 
 

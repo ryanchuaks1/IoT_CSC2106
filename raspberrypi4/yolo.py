@@ -10,7 +10,7 @@ from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
 from ultralytics.utils.plotting import Annotator, colors
 
-from mqtt_node import cars_detected
+# from mqtt_node import cars_detected
 
 def count_vehicles(source, model):
     cap = cv2.VideoCapture(source)
@@ -115,8 +115,9 @@ def count_vehicles(source, model):
                           color=region_color, thickness=region_thickness)
             
             # print(region_name, region_label)
-            data = {region_name: region_label for region_name, region_label in zip(region_name, region_label)}
-            cars_detected(data)
+            payload = {region_name: region_label for region_name, region_label in zip(region_name, region_label)}
+            print(payload)
+            # cars_detected(data)
 
 
         if vid_frame_count == 1:
