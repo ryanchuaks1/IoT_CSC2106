@@ -3,15 +3,15 @@ import pi4_files.controller_pi.config as config
 import threading
 import time
 from serial import Serial
-from globals import get_traffic_data
+from globals import MyJunction
 
 
 hostname = config.ip_addr
 broker_port = config.port
 topic = "meowmeowmeowmeow"
 
-meowmeow = []
-
+my_junction = MyJunction(5)
+topic_buffer = []
 
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
@@ -24,7 +24,7 @@ def on_message(client, userdata, msg):
     direction = msg_dict['direction']
     x = msg_dict['inflow']
     y = msg_dict['outflow']
-    meowmeow.append({'direction': direction, 'x': x, 'y': y})
+    topic_buffer.append({'direction': direction, 'x': x, 'y': y})
 
 
 def initialise_mqtt():
@@ -42,65 +42,72 @@ def mqtt_transmission():
     while True:
         client.loop()
 
+def transmit_to_lora_thread():
+    my_junction.lora_module.transmit([
+        my_junction.north.outflow, 
+        my_junction.south.outflow, 
+        my_junction.east.outflow, 
+        my_junction.west.outflow])
+    time.sleep(10 * 1000)
 
-class LoRa_Module:
-    def __init__(self, usb_port="/dev/ttyUSB0", baud_rate=9600, payload_length=32) -> None:
-        self.port = usb_port
-        self.baud_rate = baud_rate
-        self.conn = Serial(self.port, self.baud_rate)
-        self.payload_length = payload_length
+def receive_from_lora_thread():
+    my_junction.north.r_inflow, my_junction.south.r_inflow, my_junction.east.r_inflow, my_junction.west.r_inflow = my_junction.lora_module.receive()
 
-    def transmit(self, message: str):
-        self.conn.write((message + '\0').encode())
+def handle_mqtt_buffer_thread():
+    while len(topic_buffer) > 0:
+        direction = topic_buffer[-1]['direction']
+        inflow_count = topic_buffer[-1]['x']
+        outflow_count = topic_buffer[-1]['y']
 
-    def receive(self) -> str:
-        while not self.conn.readable():
-            time.sleep(0.1)
-        payload = self.conn.read(self.payload_length)
-        return payload
+        if direction == "north":
+            my_junction.north.inflow = inflow_count
+            my_junction.north.outflow = outflow_count
+        elif direction == "east":
+            my_junction.east.inflow = inflow_count
+            my_junction.east.outflow = outflow_count
+        elif direction == "south":
+            my_junction.south.inflow = inflow_count
+            my_junction.south.outflow = outflow_count
+        elif direction == "west":
+            my_junction.west.inflow = inflow_count
+            my_junction.west.outflow = outflow_count
 
+        topic_buffer.pop()
+    
+    time.sleep(10)
 
-def lora_transmission():
-    lora_module = LoRa_Module(usb_port="/dev/ttyUSB0")
+def decision_thread():
+    ns_interval = 30
+    ew_interval = 30
+    min_interval = 20
+    max_interval = 40
+    curr_direction = "ns"
 
-    while True:
-        print(lora_module.receive())
-        time.sleep(1)
+    if curr_direction == "ns":
+        if (my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) + \
+        (my_junction.south.inflow * 0.8 + my_junction.south.r_inflow * 0.2) > config.avg_traffic_ns:
+            ns_interval = ns_interval + 2 if ns_interval < max_interval else ns_interval
+            print("New NS interval", ns_interval)
+        else:
+            ns_interval = ns_interval - 2 if ns_interval > min_interval else ns_interval
+            print("New NS interval", )
+    else:
+        if (my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) + \
+            (my_junction.west.inflow * 0.8 + my_junction.west.r_inflow * 0.2) > config.avg_traffic_ew:
+            ew_interval = ew_interval + 2 if ew_interval < max_interval else ew_interval
+            print("New EW interval", ew_interval)
+        else:
+            ew_interval = ew_interval - 2 if ew_interval > min_interval else ew_interval
+            print("New EW interval", ew_interval)
 
-
-def junction_algo():
-    while True:
-        if meowmeow:
-            for data in meowmeow:
-                direction = data['direction']
-                x = data['x']
-                y = data['y']
-
-                # Update the global variables after rcv data from pis
-                if direction == "north":
-                    get_traffic_data().N.inflow = x
-                    get_traffic_data().N.outflow = y
-                elif direction == "east":
-                    get_traffic_data().E.inflow = x
-                    get_traffic_data().E.outflow = y
-                elif direction == "south":
-                    get_traffic_data().S.inflow = x
-                    get_traffic_data().S.outflow = y
-                elif direction == "west":
-                    get_traffic_data().W.inflow = x
-                    get_traffic_data().W.outflow = y
-                # Do this
-
-                # Process the data here as needed
-                print(f"Direction from junction: {direction}, X: {x}, Y: {y}")
-            meowmeow.clear()
-        time.sleep(10)
-
+    print("Current traffic direction", curr_direction, " Duration is:", ns_interval if curr_direction == "ns" else ew_interval)
 
 def main():
     threading.Thread(target=mqtt_transmission, daemon=True).start()
-    threading.Thread(target=lora_transmission, daemon=True).start()
-    threading.Thread(target=junction_algo, daemon=True).start()
+    threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
+    threading.Thread(target=transmit_to_lora_thread, daemon=True).start()
+    threading.Thread(target=receive_from_lora_thread, daemon=True).start()
+    threading.Thread(target=decision_thread, daemon=True).start()
 
 
 if __name__ == "__main__":

@@ -191,10 +191,6 @@ bool packet_for_me(struct Packet* pkt){
   return false;
 }
 
-bool is_ACK(struct Packet* pkt){
-  return strncmp((char*)pkt->payload, "ACK", 3) == 0;
-}
-
 struct Packet* receive_pkt(){
   uint8_t pkt_size = sizeof(struct Packet);
   struct Packet* pkt_buffer = generate_new_pkt();
@@ -330,15 +326,15 @@ void loop() {
     struct Packet* new_pkt = check_serial();
     if(new_pkt != NULL){
       oled_display(new_pkt->payload);
-      //broadcast_pkt(new_pkt);
+      broadcast_pkt(new_pkt);
       to_serial(new_pkt);
       free(new_pkt);
     }
 
-    // struct Packet* test_pkt = generate_new_pkt("Hello from Traffic ID 2");
+    // struct Packet* test_pkt = generate_new_pkt("{dir:'N',i:'100','o':'100'}222");
     // broadcast_pkt(test_pkt);
     // free(test_pkt);
-    // //Serial.println(F("Sent packet"));
+    //Serial.println(F("Sent packet"));
 
 
     start_time = millis();
