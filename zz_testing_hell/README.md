@@ -19,7 +19,6 @@
 |sudo apt install python3-opencv|Install the Open CV.|
 |pip3 install --trusted-host www.piwheels.org ultralytics|
 |pip3 install paho-mqtt|Install the Paho MQTT client library for Python 3.|
-|pip3 install ultralytics|Install ultralytics for |
 |pip3 install shapely|
 |pip3 install lap|
 
@@ -54,6 +53,8 @@ password_file /etc/mosquitto/passwd
 |mosquitto -d|Start the Mosquitto MQTT broker in the background.|
 
 **ACCESS POINT CONFIGURATION**
+| Command | Description |
+| --- | --- |
 |sudo systemctl stop hostapd|Stop HostAP daemon temporarily.|
 |sudo systemctl stop dnsmasq|Stop DNSMasq service temporarily.|
 |sudo service dhcpcd stop|Stop DHCP client daemon temporarily.|
