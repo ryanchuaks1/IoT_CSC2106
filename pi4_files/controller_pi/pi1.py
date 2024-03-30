@@ -51,7 +51,16 @@ def transmit_to_lora_thread():
     time.sleep(10 * 1000)
 
 def receive_from_lora_thread():
-    my_junction.north.r_inflow, my_junction.south.r_inflow, my_junction.east.r_inflow, my_junction.west.r_inflow = my_junction.lora_module.receive()
+    traffic_data = my_junction.lora_module.receive()
+    
+    if my_junction.north.id == traffic_data[0]:
+        my_junction.south.r_inflow = traffic_data[2]
+    elif my_junction.south.id == traffic_data[0]:
+        my_junction.north.r_inflow = traffic_data[1]
+    elif my_junction.east.id == traffic_data[0]:
+        my_junction.west.id = traffic_data[4]
+    elif my_junction.west.id == traffic_data[0]:
+        my_junction.east.id = traffic_data[3]
 
 def handle_mqtt_buffer_thread():
     while len(topic_buffer) > 0:
