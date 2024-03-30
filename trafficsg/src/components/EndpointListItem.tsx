@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-import { MethodTag } from "./MethodTag";
-import { EndpointListItemProps } from "../types";
+import { MethodTag } from "@/components/MethodTag";
+import { EndpointListItemProps } from "@/app/api/sandbox/types";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 

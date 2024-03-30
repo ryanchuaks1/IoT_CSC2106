@@ -1,6 +1,6 @@
 // Import user-defined files
-import Header from "@/app/component/header";
-import Barchart from "@/app/component/barchart";
+import Header from "@/components/Header";
+import Barchart from "@/components/Barchart";
 import { Endpoint } from "@/app/api/sandbox/types";
 
 export default function Home() {
