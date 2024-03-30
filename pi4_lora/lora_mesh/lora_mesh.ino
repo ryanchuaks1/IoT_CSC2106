@@ -327,7 +327,7 @@ void loop() {
     if(new_pkt != NULL){
       oled_display(new_pkt->payload);
       broadcast_pkt(new_pkt);
-      to_serial(new_pkt);
+      //to_serial(new_pkt);
       free(new_pkt);
     }
 

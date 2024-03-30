@@ -1,10 +1,10 @@
-import paho.mqtt.client as mqtt
-import pi4_files.controller_pi.config as config
+#import paho.mqtt.client as mqtt
+import config
 import threading
 import time
 from serial import Serial
 from globals import MyJunction
-from random import Random
+import random
 
 
 hostname = config.ip_addr
@@ -14,52 +14,55 @@ topic = "meowmeowmeowmeow"
 my_junction = MyJunction(1,2,6,4,5)
 topic_buffer = []
 
-def on_connect(client, userdata, flags, reason_code, properties):
-    print(f"Connected with result code {reason_code}")
-    client.subscribe(topic)
+# def on_connect(client, userdata, flags, reason_code, properties):
+#     print(f"Connected with result code {reason_code}")
+#     client.subscribe(topic)
 
 
-def on_message(client, userdata, msg):
-    payload_str = msg.payload.decode("utf-8")
-    msg_dict = ast.literal_eval(payload_str)
-    direction = msg_dict['direction']
-    x = msg_dict['inflow']
-    y = msg_dict['outflow']
-    topic_buffer.append({'direction': direction, 'x': x, 'y': y})
+# def on_message(client, userdata, msg):
+#     payload_str = msg.payload.decode("utf-8")
+#     msg_dict = ast.literal_eval(payload_str)
+#     direction = msg_dict['direction']
+#     x = msg_dict['inflow']
+#     y = msg_dict['outflow']
+#     topic_buffer.append({'direction': direction, 'x': x, 'y': y})
 
 
-def initialise_mqtt():
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+# def initialise_mqtt():
+#     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
-    client.on_connect = on_connect
-    client.on_message = on_message
+#     client.on_connect = on_connect
+#     client.on_message = on_message
 
-    client.connect(hostname, broker_port, 60)
-    return client
+#     client.connect(hostname, broker_port, 60)
+#     return client
 
 
-def mqtt_transmission():
-    client = initialise_mqtt()
-    while True:
-        client.loop()
+# def mqtt_transmission():
+#     client = initialise_mqtt()
+#     while True:
+#         client.loop()
 
 def transmit_to_lora_thread():
-    my_junction.lora_module.transmit(my_junction.id, [Random.randint(0, 127), Random.randint(0, 127), Random.randint(0, 127), Random.randint(0, 127)])
-    time.sleep(10 * 1000)
+    while True:
+        my_junction.lora_module.transmit(my_junction.id, [random.randint(0, 127), random.randint(0, 127), random.randint(0, 127), random.randint(0, 127)])
+        time.sleep(1)
+    
 
 def receive_from_lora_thread():
-    traffic_data = my_junction.lora_module.receive()
-    
-    if my_junction.north.id == traffic_data[0]:
-        my_junction.south.r_inflow = traffic_data[2]
-    elif my_junction.south.id == traffic_data[0]:
-        my_junction.north.r_inflow = traffic_data[1]
-    elif my_junction.east.id == traffic_data[0]:
-        my_junction.west.r_inflow = traffic_data[4]
-    elif my_junction.west.id == traffic_data[0]:
-        my_junction.east.r_inflow = traffic_data[3]
+    while True:
+        traffic_data = my_junction.lora_module.receive()
+        
+        if my_junction.north.id == traffic_data[0]:
+            my_junction.south.r_inflow = traffic_data[2]
+        elif my_junction.south.id == traffic_data[0]:
+            my_junction.north.r_inflow = traffic_data[1]
+        elif my_junction.east.id == traffic_data[0]:
+            my_junction.west.r_inflow = traffic_data[4]
+        elif my_junction.west.id == traffic_data[0]:
+            my_junction.east.r_inflow = traffic_data[3]
 
-    print("Traffic ID:", traffic_data[0], "Counts:", traffic_data[1:])
+        print("Traffic ID:", traffic_data[0], "Counts:", traffic_data[1:])
 
 def handle_mqtt_buffer_thread():
     while len(topic_buffer) > 0:
