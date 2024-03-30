@@ -5,10 +5,11 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 // Import user-defined files
-import Header from "@/app/component/header";
+import Header from "@/components/Header";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
-const serverWsUrl = process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:5000";
+const serverWsUrl =
+  process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:5000";
 
 export default function Traffic() {
   const [trafficData, setTrafficData] = useState<any[]>([]);
@@ -83,23 +84,28 @@ export default function Traffic() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {trafficData.map((data, idx) => (
-                    <tr key={idx}>
-                      {Object.entries(data).map(([key, value]: [string, unknown], valueIdx) => (
+                  <tr key={idx}>
+                    {Object.entries(data).map(
+                      ([key, value]: [string, unknown], valueIdx) => (
                         <td
                           key={valueIdx}
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                         >
-                          {key === 'traffic_id' ? (
-                            <Link href={`/traffic/${value}`} className="text-blue-400 underline hover:text-blue-500">
+                          {key === "traffic_id" ? (
+                            <Link
+                              href={`/traffic/${value}`}
+                              className="text-blue-400 underline hover:text-blue-500"
+                            >
                               {(value as string).toString()}
                             </Link>
                           ) : (
                             (value as string).toString()
                           )}
                         </td>
-                      ))}
-                    </tr>
-                  ))}
+                      )
+                    )}
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}

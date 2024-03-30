@@ -1,9 +1,9 @@
 import paho.mqtt.client as mqtt
-import config
+import pi4_files.object_detect_pi.config as config
 import threading
 import time
-from yolo import count_vehicles
-from globals import get_x, get_y, get_time
+from pi4_files.object_detect_pi.yolo import count_vehicles
+from pi4_files.object_detect_pi.globals import get_x, get_y, get_time
 
 hostname = config.ip_addr
 broker_port = config.port

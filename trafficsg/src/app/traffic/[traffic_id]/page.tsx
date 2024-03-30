@@ -5,7 +5,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 // Import user-defined files
-import Header from "@/app/component/header";
+import Header from "@/components/Header";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 const serverWsUrl =
@@ -67,11 +67,14 @@ export default function TrafficId({
       <Header />
 
       <div className="flex flex-col items-center p-24 pt-5">
-      <div className="self-start w-full pl-28 my-5">
-        <Link href="/traffic" className="p-2 border-2 rounded-md bg-white hover:bg-slate-100">
-          ← Back to Traffic Data
-        </Link>
-    </div>
+        <div className="self-start w-full pl-28 my-5">
+          <Link
+            href="/traffic"
+            className="p-2 border-2 rounded-md bg-white hover:bg-slate-100"
+          >
+            ← Back to Traffic Data
+          </Link>
+        </div>
 
         <div className="container p-4">
           <h1 className="text-xl font-bold m-2">Real-Time Traffic ID Data</h1>

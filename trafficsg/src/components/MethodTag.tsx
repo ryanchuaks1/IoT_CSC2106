@@ -1,4 +1,5 @@
-import { MethodTagProps } from "../types";
+// Import user-defined files
+import { MethodTagProps } from "@/app/api/sandbox/types";
 
 export const MethodTag: React.FC<MethodTagProps> = ({ method }) => {
   const color = {

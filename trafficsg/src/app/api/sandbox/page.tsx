@@ -4,9 +4,9 @@
 import React, { useEffect, useState } from "react";
 
 // Import user-defined files
-import { Endpoint } from "./types";
-import Header from "@/app/component/header";
-import { EndpointListItem } from "./Components/EndpointListItem";
+import Header from "@/components/Header";
+import { Endpoint } from "@/app/api/sandbox/types";
+import { EndpointListItem } from "@/components/EndpointListItem";
 
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 const serverWsUrl = process.env.NEXT_PUBLIC_SERVER_WS_URL || "ws://localhost:5000";
