@@ -10,6 +10,8 @@ from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
 from ultralytics.utils.plotting import Annotator, colors
 
+from pi4_files.object_detect_pi.globals import update_values
+
 # from mqtt_node import cars_detected
 
 def count_vehicles(source, model):
@@ -45,16 +47,19 @@ def count_vehicles(source, model):
     classes_to_count = [0, 2, 3, 5, 7]  # People and Vehicle
     names = model.model.names
 
+    payload = ""
+
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
             break
+
         vid_frame_count += 1
 
         # Extract the results
         results = model.track(frame, persist=True,
                               classes=classes_to_count, save=False)
-
+        
         if results[0].boxes.id is not None:
             boxes = results[0].boxes.xyxy.cpu()
             track_ids = results[0].boxes.id.int().cpu().tolist()
@@ -113,27 +118,28 @@ def count_vehicles(source, model):
 
             cv2.polylines(frame, [polygon_coords], isClosed=True,
                           color=region_color, thickness=region_thickness)
-            
-            # print(region_name, region_label)
-            payload = {region_name: region_label for region_name, region_label in zip(region_name, region_label)}
-            print(payload)
-            # cars_detected(data)
+
+            if region_name == "inflow":
+                x = region['counts']
+            elif region_name == "outflow":
+                y = region['counts']
+
+            update_values(x, y)
 
 
-        if vid_frame_count == 1:
-            cv2.namedWindow("Window")
-        cv2.imshow("Window", frame)
+        # if vid_frame_count == 1:
+        #     cv2.namedWindow("Window")
+        # cv2.imshow("Window", frame)
 
         for region in counting_regions:  # Reinitialize count for each region
             region["counts"] = 0
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+        # if cv2.waitKey(1) & 0xFF == ord("q"):
+        #     break
+
 
     del vid_frame_count
     cap.release()
     cv2.destroyAllWindows()
     cap.release()
     cv2.destroyAllWindows()
-
-

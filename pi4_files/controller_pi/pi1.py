@@ -1,9 +1,9 @@
 import paho.mqtt.client as mqtt
-import config
+import pi4_files.controller_pi.config as config
 import threading
 import time
 from serial import Serial
-import ast
+from globals import get_traffic_data
 
 
 hostname = config.ip_addr
@@ -12,9 +12,11 @@ topic = "meowmeowmeowmeow"
 
 meowmeow = []
 
+
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
     client.subscribe(topic)
+
 
 def on_message(client, userdata, msg):
     payload_str = msg.payload.decode("utf-8")
@@ -23,6 +25,7 @@ def on_message(client, userdata, msg):
     x = msg_dict['inflow']
     y = msg_dict['outflow']
     meowmeow.append({'direction': direction, 'x': x, 'y': y})
+
 
 def initialise_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -33,18 +36,20 @@ def initialise_mqtt():
     client.connect(hostname, broker_port, 60)
     return client
 
+
 def mqtt_transmission():
     client = initialise_mqtt()
     while True:
         client.loop()
 
+
 class LoRa_Module:
-    def __init__(self, usb_port = "/dev/ttyUSB0", baud_rate = 9600, payload_length = 32) -> None:
+    def __init__(self, usb_port="/dev/ttyUSB0", baud_rate=9600, payload_length=32) -> None:
         self.port = usb_port
         self.baud_rate = baud_rate
         self.conn = Serial(self.port, self.baud_rate)
         self.payload_length = payload_length
-    
+
     def transmit(self, message: str):
         self.conn.write((message + '\0').encode())
 
@@ -57,10 +62,11 @@ class LoRa_Module:
 
 def lora_transmission():
     lora_module = LoRa_Module(usb_port="/dev/ttyUSB0")
-    
+
     while True:
         print(lora_module.receive())
         time.sleep(1)
+
 
 def junction_algo():
     while True:
@@ -69,15 +75,33 @@ def junction_algo():
                 direction = data['direction']
                 x = data['x']
                 y = data['y']
+
+                # Update the global variables after rcv data from pis
+                if direction == "north":
+                    get_traffic_data().N.inflow = x
+                    get_traffic_data().N.outflow = y
+                elif direction == "east":
+                    get_traffic_data().E.inflow = x
+                    get_traffic_data().E.outflow = y
+                elif direction == "south":
+                    get_traffic_data().S.inflow = x
+                    get_traffic_data().S.outflow = y
+                elif direction == "west":
+                    get_traffic_data().W.inflow = x
+                    get_traffic_data().W.outflow = y
+                # Do this
+
                 # Process the data here as needed
                 print(f"Direction from junction: {direction}, X: {x}, Y: {y}")
             meowmeow.clear()
         time.sleep(10)
 
+
 def main():
     threading.Thread(target=mqtt_transmission, daemon=True).start()
     threading.Thread(target=lora_transmission, daemon=True).start()
     threading.Thread(target=junction_algo, daemon=True).start()
+
 
 if __name__ == "__main__":
     main()
