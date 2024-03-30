@@ -12,9 +12,6 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
-// Import user-defined files
-import { Endpoint } from "@/app/api/sandbox/types";
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -29,14 +26,12 @@ export default function Barchart({
   header,
   dataPoints,
   dataDescription,
-  endpoint,
   chartWidth,
 }: {
   header: string;
   dataPoints: string[];
   dataDescription: string[];
   chartWidth?: string;
-  endpoint?: Endpoint[];
 }) {
   const getRandomNumber = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -54,10 +49,6 @@ export default function Barchart({
       },
     },
   };
-
-  if (endpoint) {
-    // TODO
-  }
 
   const datasets = [];
   for (let i = 0; i < dataDescription.length; i++) {
