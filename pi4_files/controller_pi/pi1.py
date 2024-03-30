@@ -4,13 +4,14 @@ import threading
 import time
 from serial import Serial
 from globals import MyJunction
+from random import Random
 
 
 hostname = config.ip_addr
 broker_port = config.port
 topic = "meowmeowmeowmeow"
 
-my_junction = MyJunction(5)
+my_junction = MyJunction(1,2,6,4,5)
 topic_buffer = []
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -43,11 +44,7 @@ def mqtt_transmission():
         client.loop()
 
 def transmit_to_lora_thread():
-    my_junction.lora_module.transmit([
-        my_junction.north.outflow, 
-        my_junction.south.outflow, 
-        my_junction.east.outflow, 
-        my_junction.west.outflow])
+    my_junction.lora_module.transmit(my_junction.id, [Random.randint(0, 127), Random.randint(0, 127), Random.randint(0, 127), Random.randint(0, 127)])
     time.sleep(10 * 1000)
 
 def receive_from_lora_thread():
@@ -58,9 +55,11 @@ def receive_from_lora_thread():
     elif my_junction.south.id == traffic_data[0]:
         my_junction.north.r_inflow = traffic_data[1]
     elif my_junction.east.id == traffic_data[0]:
-        my_junction.west.id = traffic_data[4]
+        my_junction.west.r_inflow = traffic_data[4]
     elif my_junction.west.id == traffic_data[0]:
-        my_junction.east.id = traffic_data[3]
+        my_junction.east.r_inflow = traffic_data[3]
+
+    print("Traffic ID:", traffic_data[0], "Counts:", traffic_data[1:])
 
 def handle_mqtt_buffer_thread():
     while len(topic_buffer) > 0:
@@ -112,11 +111,11 @@ def decision_thread():
     print("Current traffic direction", curr_direction, " Duration is:", ns_interval if curr_direction == "ns" else ew_interval)
 
 def main():
-    threading.Thread(target=mqtt_transmission, daemon=True).start()
-    threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
+    #threading.Thread(target=mqtt_transmission, daemon=True).start()
+    #threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
     threading.Thread(target=transmit_to_lora_thread, daemon=True).start()
     threading.Thread(target=receive_from_lora_thread, daemon=True).start()
-    threading.Thread(target=decision_thread, daemon=True).start()
+    #threading.Thread(target=decision_thread, daemon=True).start()
 
 
 if __name__ == "__main__":

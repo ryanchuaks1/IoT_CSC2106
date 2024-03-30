@@ -29,11 +29,11 @@ class NeighbourJunction:
         self.r_inflow = 0
 
 class MyJunction:
-    def __init__(self, id) -> None:
+    def __init__(self, id, north_id, south_id, east_id, west_id) -> None:
         self.id = id
-        self.north = NeighbourJunction(1)
-        self.south = NeighbourJunction(2)
-        self.east = NeighbourJunction(3)
-        self.west = NeighbourJunction(4)
+        self.north = NeighbourJunction(north_id)
+        self.south = NeighbourJunction(south_id)
+        self.east = NeighbourJunction(east_id)
+        self.west = NeighbourJunction(west_id)
 
         self.lora_module = LoRa_Module("/dev/ttyUSB0")
