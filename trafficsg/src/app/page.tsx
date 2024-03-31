@@ -52,7 +52,9 @@ export default function Home() {
       );
 
       // Flatten the array of arrays into a single array of objects
-      trafficCollectionResults = trafficCollectionResults.flat().sort((a: any, b: any) => a.timestamp - b.timestamp);
+      // and sort by ascending timestamp
+      trafficCollectionResults = trafficCollectionResults.flat()
+        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       setTrafficCollectionData(trafficCollectionResults);
 
       // Process the data for each chart/data visualization
@@ -65,59 +67,42 @@ export default function Home() {
   // Process the data for number-of-vehicles line chart
   const processNovLcData = (trafficCollectionResults: any) => {
     // Filter the traffic data based on the selected filter criteria
-    let filteredTrafficData = trafficCollectionResults.filter(
-      (trafficData: any) => {
-        return (
-          (novLcFilterTrafficId === -1 ||
-            trafficData.traffic_id === novLcFilterTrafficId) &&
-          (novLcFilterLaneDirection === "" ||
-            trafficData.lane_direction === novLcFilterLaneDirection)
-        );
-      }
-    );
-
-    // Function to group the records by the given interval in hours
-    const groupByTimeInterval = (data: any[], interval: number) => {
-      const groups: { [key: string]: any[] } = {};
+    const groupByTimeInterval = (data: any[], interval: number): any[] => {
+      const groups: { [key: string]: any } = {};
 
       data.forEach((item) => {
-        // Parse the timestamp and round it down to the nearest interval
+        // Create a date object from the timestamp
         const date = new Date(item.timestamp);
-        const roundedDate = new Date(
-          Math.floor(date.getTime() / (interval * 60 * 60 * 1000)) *
-            (interval * 60 * 60 * 1000)
-        );
 
-        // Use toISOString to create a consistent group key
-        const key = roundedDate.toISOString();
-
-        if (!groups[key]) {
-          groups[key] = [];
+        // Depending on the interval, adjust the date
+        if (interval === 1) {
+          date.setMinutes(0, 0, 0);
         }
 
-        groups[key].push(item);
+        // Use toISOString to create a consistent group key
+        const key = date.toISOString();
+        console.log(`Grouping key for timestamp ${item.timestamp}: ${key}`); // Debug log
+
+        if (!groups[key]) {
+          groups[key] = { number_of_vehicles: 0, timestamp: key };
+        }
+
+        groups[key].number_of_vehicles += item.number_of_vehicles;
       });
 
-      return Object.keys(groups).map((key) => {
-        return {
-          time: key,
-          number_of_vehicles: groups[key].reduce(
-            (sum, current) => sum + current.number_of_vehicles,
-            0
-          ),
-        };
-      });
+      // Convert the grouped object back to an array
+      return Object.keys(groups).map((key) => groups[key]);
     };
 
     // `timeIntervalMap` = [no filter, 1h, 3h, 5h, 12h, daily, weekly, monthly]
-    const timeIntervalMap = [0, 1, 3, 5, 12, 24, 24 * 7, 24 * 30]; 
+    const timeIntervalMap: number[] = [0, 1, 3, 5, 12, 24, 24 * 7, 24 * 30];
     const interval = timeIntervalMap[novLcFilterTimeInterval] || 0;
 
+    // Declare and assign the variable filteredTrafficData
+    const filteredTrafficData = trafficCollectionResults;
+
     // Group and sum the data if there is a time interval filter
-    let groupedData =
-      interval > 0
-        ? groupByTimeInterval(filteredTrafficData, interval)
-        : filteredTrafficData;
+    let groupedData = groupByTimeInterval(filteredTrafficData, interval);
 
     // Sort the groups by time and take the last 20 records
     groupedData = groupedData
@@ -126,7 +111,21 @@ export default function Home() {
 
     // Prepare the data for the chart
     const data = {
-      labels: groupedData.map((g: { timestamp: any; }) => g.timestamp),
+      labels: groupedData.map((g: any) => {
+        const date = new Date(g.timestamp);
+        const dateString = date.toLocaleDateString('en-US', {
+          day: '2-digit', 
+          month: 'long', 
+          year: 'numeric'
+        });
+        const timeString = date.toLocaleTimeString('en-US', {
+          hour: 'numeric', 
+          minute: '2-digit', 
+          second: '2-digit',
+          hour12: true
+        });
+        return `${dateString} ${timeString}`;
+      }),
       datasets: [{
         label: 'Number of vehicles',
         data: groupedData.map((g: { number_of_vehicles: any; }) => g.number_of_vehicles),
@@ -135,10 +134,6 @@ export default function Home() {
         fill: false,
       }]
     };
-
-    console.log("FICL");
-    console.log(data);
-    console.log("COle");
 
     setNovLcData(data);
   };
