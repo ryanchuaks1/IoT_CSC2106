@@ -61,17 +61,14 @@ export default function TrafficId({
     return () => {
       ws.close();
     };
-  }, []);
+  });
   return (
     <main className="min-h-screen min-w-screen">
       <Header />
 
       <div className="flex flex-col items-center p-24 pt-5">
         <div className="self-start w-full pl-28 my-5">
-          <Link
-            href="/traffic"
-            className="p-2 border-2 rounded-md bg-white hover:bg-slate-100"
-          >
+          <Link href="/traffic" className="p-2 border-2 rounded-md bg-white hover:bg-slate-100">
             ← Back to Traffic Data
           </Link>
         </div>

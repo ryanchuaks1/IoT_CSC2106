@@ -55,7 +55,7 @@ export default function Traffic() {
     return () => {
       ws.close();
     };
-  }, []);
+  });
   return (
     <main className="min-h-screen min-w-screen">
       <Header />
