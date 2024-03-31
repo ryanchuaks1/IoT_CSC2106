@@ -69,7 +69,7 @@ export default function Barchart({
   };
 
   return (
-    <div className={`m-4 p-1 border border-primary flex-auto ${chartWidth}`}>
+    <div className={`m-4 p-1 border border-slate-200 flex-auto ${chartWidth}`}>
       <Bar className="w-full" options={options} data={data} />
     </div>
   );

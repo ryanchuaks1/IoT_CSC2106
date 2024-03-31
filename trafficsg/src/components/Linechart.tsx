@@ -42,7 +42,7 @@ const LineChart = ({ header, data, chartWidth }: LineChartProps) => {
       };
 
     return (
-        <div className={`m-4 p-1 border border-primary flex-auto ${chartWidth}`}>
+        <div className={`m-4 p-1 border border-slate-200 flex-auto ${chartWidth}`}>
             <Line data={data} options={options} />
         </div>
     );

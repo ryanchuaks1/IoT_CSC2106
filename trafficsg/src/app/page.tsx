@@ -218,11 +218,20 @@ export default function Home() {
           </div>
         </div>
 
-        <LineChart
-          header={"Number of vehicles over time"}
-          chartWidth="w-max-content lg:w-1/2"
-          data={novLcData}
-        />
+        <div className="flex justify-around p-4">
+          <LineChart
+            header={"Number of vehicles over time"}
+            chartWidth="w-max-content lg:w-1/2"
+            data={novLcData}
+          />
+
+          <Barchart
+            header={"Traffic I/O by time of day"}
+            dataPoints={["Morning", "Afternoon", "Evening", "Night"]}
+            dataDescription={["Traffic ID 1", "Traffic ID 2"]}
+            chartWidth="w-max-content lg:w-1/2"
+          />
+        </div>
       </div>
     </div>
   );
