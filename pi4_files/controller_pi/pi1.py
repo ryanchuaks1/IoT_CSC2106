@@ -1,4 +1,5 @@
-#import paho.mqtt.client as mqtt
+import paho.mqtt.client as mqtt
+import ast
 import config
 import threading
 import time
@@ -12,36 +13,53 @@ broker_port = config.port
 topic = "meowmeowmeowmeow"
 
 my_junction = MyJunction(1,2,6,4,5)
-topic_buffer = []
 
-# def on_connect(client, userdata, flags, reason_code, properties):
-#     print(f"Connected with result code {reason_code}")
-#     client.subscribe(topic)
-
-
-# def on_message(client, userdata, msg):
-#     payload_str = msg.payload.decode("utf-8")
-#     msg_dict = ast.literal_eval(payload_str)
-#     direction = msg_dict['direction']
-#     x = msg_dict['inflow']
-#     y = msg_dict['outflow']
-#     topic_buffer.append({'direction': direction, 'x': x, 'y': y})
+n1 = {}
+e1 = {}
+s1 = {}
+w1 = {}
 
 
-# def initialise_mqtt():
-#     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-
-#     client.on_connect = on_connect
-#     client.on_message = on_message
-
-#     client.connect(hostname, broker_port, 60)
-#     return client
+def on_connect(client, userdata, flags, reason_code, properties):
+    print(f"Connected with result code {reason_code}")
+    client.subscribe(topic)
 
 
-# def mqtt_transmission():
-#     client = initialise_mqtt()
-#     while True:
-#         client.loop()
+def on_message(client, userdata, msg):
+    payload_str = msg.payload.decode("utf-8")
+    msg_dict = ast.literal_eval(payload_str)
+    direction = msg_dict['direction']
+    inflow_count = msg_dict['inflow']
+    outflow_count = msg_dict['outflow']
+        
+    if direction == "north":
+        my_junction.north.inflow = inflow_count
+        my_junction.north.outflow = outflow_count
+    elif direction == "east":
+        my_junction.east.inflow = inflow_count
+        my_junction.east.outflow = outflow_count
+    elif direction == "south":
+        my_junction.south.inflow = inflow_count
+        my_junction.south.outflow = outflow_count
+    elif direction == "west":
+        my_junction.west.inflow = inflow_count
+        my_junction.west.outflow = outflow_count
+    print(my_junction.north.inflow, my_junction.north.outflow, my_junction.east.inflow, my_junction.east.outflow, my_junction.south.inflow, my_junction.south.outflow, my_junction.west.inflow, my_junction.west.outflow)
+
+def initialise_mqtt():
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+    client.on_connect = on_connect
+    client.on_message = on_message
+
+    client.connect(hostname, broker_port, 60)
+    return client
+
+
+def mqtt_transmission():
+    client = initialise_mqtt()
+    while True:
+        client.loop()
 
 def transmit_to_lora_thread():
     while True:
@@ -64,28 +82,6 @@ def receive_from_lora_thread():
 
         print("Traffic ID:", traffic_data[0], "Counts:", traffic_data[1:])
 
-def handle_mqtt_buffer_thread():
-    while len(topic_buffer) > 0:
-        direction = topic_buffer[-1]['direction']
-        inflow_count = topic_buffer[-1]['x']
-        outflow_count = topic_buffer[-1]['y']
-
-        if direction == "north":
-            my_junction.north.inflow = inflow_count
-            my_junction.north.outflow = outflow_count
-        elif direction == "east":
-            my_junction.east.inflow = inflow_count
-            my_junction.east.outflow = outflow_count
-        elif direction == "south":
-            my_junction.south.inflow = inflow_count
-            my_junction.south.outflow = outflow_count
-        elif direction == "west":
-            my_junction.west.inflow = inflow_count
-            my_junction.west.outflow = outflow_count
-
-        topic_buffer.pop()
-    
-    time.sleep(10)
 
 def decision_thread():
     ns_interval = 30
