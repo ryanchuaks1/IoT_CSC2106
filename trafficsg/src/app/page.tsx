@@ -278,7 +278,15 @@ export default function Home() {
     }
 
     // Prepare the labels for the chart (use the timestamps from one direction, assuming all have the same intervals)
-    const labels = groupedDataByDirection["north"]
+    let selectedgroupedDataByDirection;
+    for (let direction of directions) {
+      if (groupedDataByDirection[direction].length > 0) {
+        selectedgroupedDataByDirection = groupedDataByDirection[direction];
+        break;
+      }
+    }
+
+    const labels = selectedgroupedDataByDirection
       .slice(-20)
       .map((g: any) => {
         const date = new Date(g.timestamp);
