@@ -16,6 +16,11 @@ export default function Home() {
   // Global state to store traffic collection data
   const [trafficCollectionData, setTrafficCollectionData] = useState<any>([]);
 
+  // States for avgNovInWeek, avgNovInDay, avgNovInHour - default values
+  const [avgNovInHour, setAvgNovInHour] = useState<number>(0);
+  const [avgNovInDay, setAvgNovInDay] = useState<number>(0);
+  const [avgNovInWeek, setAvgNovInWeek] = useState<number>(0);
+
   // States for number-of-vehicles line chart (novLc) data - default values
   const [novLcFilterTrafficId, setnovLcFilterTrafficId] = useState<number>(-1);
   const [novLcFilterTimeInterval, setNovLcFilterTimeInterval] = useState<number>(0);
@@ -155,6 +160,34 @@ export default function Home() {
     setNovLcData(data);
   };
 
+  // Adjusts average cars in last hour, day, week whenever trafficCollectionData changes
+  useEffect(() => {
+    // Filter trafficCollectionData to get the last hour, day, week
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const trafficDataInHour = trafficCollectionData.filter((item: any) => new Date(item.timestamp) > oneHourAgo);
+    const trafficDataInDay = trafficCollectionData.filter((item: any) => new Date(item.timestamp) > oneDayAgo);
+    const trafficDataInWeek = trafficCollectionData.filter((item: any) => new Date(item.timestamp) > oneWeekAgo);
+
+    // Sums the number of vehicles in the last hour, day, week
+    const sumInHour = trafficDataInHour.reduce((acc: number, item: any) => acc + item.number_of_vehicles, 0);
+    const sumInDay = trafficDataInDay.reduce((acc: number, item: any) => acc + item.number_of_vehicles, 0);
+    const sumInWeek = trafficDataInWeek.reduce((acc: number, item: any) => acc + item.number_of_vehicles, 0);
+
+    // Calculate the average number of vehicles per lane direction
+    const avgInHour = sumInHour / 4 || 0;
+    const avgInDay = sumInDay / 4 || 0;
+    const avgInWeek = sumInWeek / 4 || 0;
+
+    // Update the state variables
+    setAvgNovInHour(avgInHour);
+    setAvgNovInDay(avgInDay);
+    setAvgNovInWeek(avgInWeek);
+  }, [trafficCollectionData]);
+
+  // Load and process traffic data whenever filter criteria and traffic collection data changes
   useEffect(() => {
     loadAndProcessTrafficData();
 
@@ -235,7 +268,25 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex justify-around p-4">
+        <div className="flex justify-around px-4">
+          <div className={`m-4 text-sm border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}>
+              <span className="text-xs font-semibold text-slate-600">Average cars in past hour</span>
+              <div className="text-4xl w-max-content text-center font-bold pt-2">{avgNovInHour}</div>
+              <div className="w-max-content text-center">Number of Vehicles</div>
+          </div>
+          <div className={`m-4 text-sm border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}>
+              <span className="text-xs font-semibold text-slate-600">Average cars in last 1 days</span>
+              <div className="text-4xl w-max-content text-center font-bold pt-2">{avgNovInDay}</div>
+              <div className="w-max-content text-center">Number of Vehicles</div>
+          </div>
+          <div className={`m-4 border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}>
+              <span className="text-xs font-semibold text-slate-600">Average cars in last 7 days</span>
+              <div className="text-4xl w-max-content text-center font-bold pt-2">{avgNovInWeek}</div>
+              <div className="w-max-content text-center">Number of Vehicles</div>
+          </div>
+        </div>
+
+        <div className="flex justify-around px-4">
           <LineChart
             header={"Number of vehicles over time"}
             chartWidth="w-max-content lg:w-1/2"
