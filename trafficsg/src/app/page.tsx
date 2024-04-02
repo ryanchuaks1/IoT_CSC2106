@@ -66,6 +66,24 @@ export default function Home() {
 
   // Process the data for number-of-vehicles line chart
   const processNovLcData = (trafficCollectionResults: any) => {
+    
+    // Filter the data based on the traffic ID
+    trafficCollectionResults = trafficCollectionResults.filter((item: any) => {
+      if (novLcFilterTrafficId === -1) {
+        return true;
+      }
+      return item.traffic_id == novLcFilterTrafficId;
+    });
+    
+    // Filter the data based on the lane direction
+    trafficCollectionResults = trafficCollectionResults.filter((item: any) => {
+      if (novLcFilterLaneDirection === "") {
+        return true;
+      }
+      return item.lane_direction == novLcFilterLaneDirection;
+    });
+
+
     // Filter the traffic data based on the selected filter criteria
     const groupByTimeInterval = (data: any[], interval: number): any[] => {
       const groups: { [key: string]: any } = {};
@@ -81,7 +99,6 @@ export default function Home() {
 
         // Use toISOString to create a consistent group key
         const key = date.toISOString();
-        console.log(`Grouping key for timestamp ${item.timestamp}: ${key}`); // Debug log
 
         if (!groups[key]) {
           groups[key] = { number_of_vehicles: 0, timestamp: key };
