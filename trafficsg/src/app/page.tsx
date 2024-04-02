@@ -25,7 +25,8 @@ export default function Home() {
   const [novLcFilterTrafficId, setnovLcFilterTrafficId] = useState<number>(-1);
   const [novLcFilterTimeInterval, setNovLcFilterTimeInterval] = useState<number>(0);
   const [novLcFilterLaneDirection, setNovLcFilterLaneDirection] = useState<string>("");
-  const [novLcData, setNovLcData] = useState<{ labels: String[], datasets: any[]; }>({ labels: [], datasets: [] });
+  const [novLcData, setNovLcData] = useState<{ labels: String[]; datasets: any[]; }>({ labels: [], datasets: [] });
+  const [novLdLcData, setNovLdLcData] = useState<{ labels: String[]; datasets: any[]; }>({ labels: [], datasets: [] });
 
   // Function to fetch traffic data
   const fetchTrafficData = async () => {
@@ -58,12 +59,17 @@ export default function Home() {
 
       // Flatten the array of arrays into a single array of objects
       // and sort by ascending timestamp
-      trafficCollectionResults = trafficCollectionResults.flat()
-        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      trafficCollectionResults = trafficCollectionResults
+        .flat()
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
       setTrafficCollectionData(trafficCollectionResults);
 
       // Process the data for each chart/data visualization
       processNovLcData(trafficCollectionResults);
+      processNovLdLcData(trafficCollectionResults);
     } catch (error) {
       console.error("Error fetching traffic data:", error);
     }
@@ -71,7 +77,6 @@ export default function Home() {
 
   // Process the data for number-of-vehicles line chart
   const processNovLcData = (trafficCollectionResults: any) => {
-    
     // Filter the data based on the traffic ID
     trafficCollectionResults = trafficCollectionResults.filter((item: any) => {
       if (novLcFilterTrafficId === -1) {
@@ -79,7 +84,7 @@ export default function Home() {
       }
       return item.traffic_id == novLcFilterTrafficId;
     });
-    
+
     // Filter the data based on the lane direction
     trafficCollectionResults = trafficCollectionResults.filter((item: any) => {
       if (novLcFilterLaneDirection === "") {
@@ -87,7 +92,6 @@ export default function Home() {
       }
       return item.lane_direction == novLcFilterLaneDirection;
     });
-
 
     // Filter the traffic data based on the selected filter criteria
     const groupByTimeInterval = (data: any[], interval: number): any[] => {
@@ -128,36 +132,181 @@ export default function Home() {
 
     // Sort the groups by time and take the last 20 records
     groupedData = groupedData
-      .sort((a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime())
+      .sort(
+        (a: any, b: any) =>
+          new Date(a.time).getTime() - new Date(b.time).getTime()
+      )
       .slice(-20);
 
     // Prepare the data for the chart
     const data = {
       labels: groupedData.map((g: any) => {
         const date = new Date(g.timestamp);
-        const dateString = date.toLocaleDateString('en-US', {
-          day: '2-digit', 
-          month: 'long', 
-          year: 'numeric'
+        return date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         });
-        const timeString = date.toLocaleTimeString('en-US', {
-          hour: 'numeric', 
-          minute: '2-digit', 
-          second: '2-digit',
-          hour12: true
-        });
-        return `${dateString} ${timeString}`;
       }),
-      datasets: [{
-        label: 'Number of vehicles',
-        data: groupedData.map((g: { number_of_vehicles: any; }) => g.number_of_vehicles),
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1,
-        fill: false,
-      }]
+      datasets: [
+        {
+          label: "Number of vehicles",
+          data: groupedData.map(
+            (g: { number_of_vehicles: any }) => g.number_of_vehicles
+          ),
+          borderColor: "rgb(200, 200, 200)",
+          backgroundColor: "rgb(200, 200, 200)",
+          tension: 0.1,
+          fill: false,
+        },
+      ],
     };
 
     setNovLcData(data);
+  };
+
+  // Process the data for number-of-vehicles (lane-direction) line chart
+  const processNovLdLcData = (trafficCollectionResults: any) => {
+    // Filter the data based on the traffic ID
+    trafficCollectionResults = trafficCollectionResults.filter((item: any) => {
+      if (novLcFilterTrafficId === -1) {
+        return true;
+      }
+      return item.traffic_id == novLcFilterTrafficId;
+    });
+
+    // Filter the data based on the lane direction
+    trafficCollectionResults = trafficCollectionResults.filter((item: any) => {
+      if (novLcFilterLaneDirection === "") {
+        return true;
+      }
+      return item.lane_direction == novLcFilterLaneDirection;
+    });
+
+    // Group the traffic data by direction
+    const directions = ["north", "south", "east", "west"];
+
+    // Initialize an object to hold datasets for each direction
+    const datasetsForDirections = directions.reduce((acc: any, direction) => {
+      acc[direction] = {
+        label: `Number of vehicles (${direction})`,
+        data: [],
+        borderColor: "", // add specific color for each direction
+        tension: 0.1,
+        fill: false,
+      };
+      return acc;
+    }, {});
+
+    // You can define different colors for each direction if needed
+    const directionColors: any = {
+      north: "rgb(255, 99, 132)",
+      south: "rgb(54, 162, 235)",
+      east: "rgb(255, 206, 86)",
+      west: "rgb(75, 192, 192)",
+    };
+
+    // Filter and group data by time interval and direction
+    const groupByTimeIntervalAndDirection = (data: any[], interval: number) => {
+      const groups: { [key: string]: any } = {};
+
+      data.forEach((item) => {
+        // Only process if direction is one of the known directions
+        if (directions.includes(item.lane_direction)) {
+          const date = new Date(item.timestamp);
+          if (interval === 1) {
+            date.setMinutes(0, 0, 0);
+          }
+          const key = date.toISOString() + `_${item.lane_direction}`;
+
+          if (!groups[key]) {
+            groups[key] = {
+              number_of_vehicles: 0,
+              timestamp: date.toISOString(),
+              lane_direction: item.lane_direction,
+            };
+          }
+
+          groups[key].number_of_vehicles += item.number_of_vehicles;
+        }
+      });
+
+      // Make sure to initialize the accumulator object with properties for each direction
+      const initialAccumulator = {
+        north: [],
+        south: [],
+        east: [],
+        west: [],
+      };
+
+      // Convert the grouped object back to an array and separate by direction
+      return Object.keys(groups).reduce((acc: any, key) => {
+        const group = groups[key];
+        if (acc[group.lane_direction]) {
+          acc[group.lane_direction].push(group);
+        }
+        return acc;
+      }, initialAccumulator);
+    };
+
+    const sortGroupsByTime = (dataset: any) => {
+      for (const direction of directions) {
+        dataset[direction].sort(
+          (a: any, b: any) =>
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+      }
+    };
+
+    // `timeIntervalMap` = [no filter, 1h, 3h, 5h, 12h, daily, weekly, monthly]
+    const timeIntervalMap: number[] = [0, 1, 3, 5, 12, 24, 24 * 7, 24 * 30];
+    const interval = timeIntervalMap[novLcFilterTimeInterval] || 0;
+    let groupedDataByDirection = groupByTimeIntervalAndDirection(
+      trafficCollectionResults,
+      interval
+    );
+
+    sortGroupsByTime(groupedDataByDirection);
+
+    // Prepare the datasets
+    for (const direction of directions) {
+      const groupedData = groupedDataByDirection[direction].slice(-20); // take the last 20 records
+      datasetsForDirections[direction] = groupedData.map(
+        (g: any) => g.number_of_vehicles
+      );
+    }
+
+    // Prepare the labels for the chart (use the timestamps from one direction, assuming all have the same intervals)
+    const labels = groupedDataByDirection["north"]
+      .slice(-20)
+      .map((g: any) => {
+        const date = new Date(g.timestamp);
+        return date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      });
+
+    // Prepare the final data object for the chart
+    const data = {
+      labels,
+      datasets: Object.entries(datasetsForDirections).map(([direction, dataset]) => {
+        return {
+          // Label as key for the dataset
+          label: `${direction.charAt(0).toUpperCase() + direction.slice(1)}`,
+          data: dataset,
+          borderColor: directionColors[direction],
+          backgroundColor: directionColors[direction],
+          tension: 0.1,
+          fill: false,
+        };
+      }),
+    };
+
+    setNovLdLcData(data);
   };
 
   // Adjusts average cars in last hour, day, week whenever trafficCollectionData changes
@@ -167,14 +316,29 @@ export default function Home() {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const trafficDataInHour = trafficCollectionData.filter((item: any) => new Date(item.timestamp) > oneHourAgo);
-    const trafficDataInDay = trafficCollectionData.filter((item: any) => new Date(item.timestamp) > oneDayAgo);
-    const trafficDataInWeek = trafficCollectionData.filter((item: any) => new Date(item.timestamp) > oneWeekAgo);
+    const trafficDataInHour = trafficCollectionData.filter(
+      (item: any) => new Date(item.timestamp) > oneHourAgo
+    );
+    const trafficDataInDay = trafficCollectionData.filter(
+      (item: any) => new Date(item.timestamp) > oneDayAgo
+    );
+    const trafficDataInWeek = trafficCollectionData.filter(
+      (item: any) => new Date(item.timestamp) > oneWeekAgo
+    );
 
     // Sums the number of vehicles in the last hour, day, week
-    const sumInHour = trafficDataInHour.reduce((acc: number, item: any) => acc + item.number_of_vehicles, 0);
-    const sumInDay = trafficDataInDay.reduce((acc: number, item: any) => acc + item.number_of_vehicles, 0);
-    const sumInWeek = trafficDataInWeek.reduce((acc: number, item: any) => acc + item.number_of_vehicles, 0);
+    const sumInHour = trafficDataInHour.reduce(
+      (acc: number, item: any) => acc + item.number_of_vehicles,
+      0
+    );
+    const sumInDay = trafficDataInDay.reduce(
+      (acc: number, item: any) => acc + item.number_of_vehicles,
+      0
+    );
+    const sumInWeek = trafficDataInWeek.reduce(
+      (acc: number, item: any) => acc + item.number_of_vehicles,
+      0
+    );
 
     // Calculate the average number of vehicles per lane direction
     const avgInHour = sumInHour / 4 || 0;
@@ -226,7 +390,13 @@ export default function Home() {
             >
               <option value="-1">All</option>
 
-              {Array.from(new Set(trafficCollectionData.map((trafficData: any) => trafficData.traffic_id as number)))
+              {Array.from(
+                new Set(
+                  trafficCollectionData.map(
+                    (trafficData: any) => trafficData.traffic_id as number
+                  )
+                )
+              )
                 .sort((a: any, b: any) => a - b)
                 .map((id: any) => (
                   <option key={id} value={id}>
@@ -240,7 +410,9 @@ export default function Home() {
             <span className="font-bold">Time Interval: </span>
             <select
               value={novLcFilterTimeInterval}
-              onChange={(e) => setNovLcFilterTimeInterval(Number(e.target.value))}
+              onChange={(e) =>
+                setNovLcFilterTimeInterval(Number(e.target.value))
+              }
             >
               <option value="0">No Filter</option>
               <option value="1">1 Hour</option>
@@ -269,36 +441,60 @@ export default function Home() {
         </div>
 
         <div className="flex justify-around px-4">
-          <div className={`m-4 text-sm border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}>
-              <span className="text-xs font-semibold text-slate-600">Average cars in past hour</span>
-              <div className="text-4xl w-max-content text-center font-bold pt-2">{avgNovInHour}</div>
-              <div className="w-max-content text-center">Number of Vehicles</div>
+          <div
+            className={`m-4 text-sm border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}
+          >
+            <span className="text-xs font-semibold text-slate-600">
+              Average cars in past hour
+            </span>
+            <div className="text-4xl w-max-content text-center font-bold pt-2">
+              {avgNovInHour}
+            </div>
+            <div className="w-max-content text-center">Number of Vehicles</div>
           </div>
-          <div className={`m-4 text-sm border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}>
-              <span className="text-xs font-semibold text-slate-600">Average cars in last 1 days</span>
-              <div className="text-4xl w-max-content text-center font-bold pt-2">{avgNovInDay}</div>
-              <div className="w-max-content text-center">Number of Vehicles</div>
+          <div
+            className={`m-4 text-sm border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}
+          >
+            <span className="text-xs font-semibold text-slate-600">
+              Average cars in last 1 days
+            </span>
+            <div className="text-4xl w-max-content text-center font-bold pt-2">
+              {avgNovInDay}
+            </div>
+            <div className="w-max-content text-center">Number of Vehicles</div>
           </div>
-          <div className={`m-4 border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}>
-              <span className="text-xs font-semibold text-slate-600">Average cars in last 7 days</span>
-              <div className="text-4xl w-max-content text-center font-bold pt-2">{avgNovInWeek}</div>
-              <div className="w-max-content text-center">Number of Vehicles</div>
+          <div
+            className={`m-4 border border-slate-200 flex-auto w-max-content lg:w-1/3 py-2 p-5`}
+          >
+            <span className="text-xs font-semibold text-slate-600">
+              Average cars in last 7 days
+            </span>
+            <div className="text-4xl w-max-content text-center font-bold pt-2">
+              {avgNovInWeek}
+            </div>
+            <div className="w-max-content text-center">Number of Vehicles</div>
           </div>
         </div>
 
         <div className="flex justify-around px-4">
           <LineChart
-            header={"Number of vehicles over time"}
+            header={"Total number of vehicles over time"}
             chartWidth="w-max-content lg:w-1/2"
             data={novLcData}
           />
 
-          <Barchart
+          <LineChart
+            header={"Total number of vehicles per lane direction"}
+            chartWidth="w-max-content lg:w-1/2"
+            data={novLdLcData}
+          />
+
+          {/* <Barchart
             header={"Traffic I/O by time of day"}
             dataPoints={["Morning", "Afternoon", "Evening", "Night"]}
             dataDescription={["Traffic ID 1", "Traffic ID 2"]}
             chartWidth="w-max-content lg:w-1/2"
-          />
+          /> */}
         </div>
       </div>
     </div>
