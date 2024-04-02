@@ -18,8 +18,8 @@ export default function Home() {
 
   // States for number-of-vehicles line chart (novLc) data - default values
   const [novLcFilterTrafficId, setnovLcFilterTrafficId] = useState<number>(-1);
-  const [novLcFilterTimeInterval, setnovLcFilterTimeInterval] = useState<number>(0);
-  const [novLcFilterLaneDirection, setnovLcFilterLaneDirection] = useState<string>("");
+  const [novLcFilterTimeInterval, setNovLcFilterTimeInterval] = useState<number>(0);
+  const [novLcFilterLaneDirection, setNovLcFilterLaneDirection] = useState<string>("");
   const [novLcData, setNovLcData] = useState<{ labels: String[], datasets: any[]; }>({ labels: [], datasets: [] });
 
   // Function to fetch traffic data
@@ -177,7 +177,7 @@ export default function Home() {
     return () => {
       ws.close();
     };
-  });
+  }, [novLcFilterTrafficId, novLcFilterTimeInterval, novLcFilterLaneDirection]);
 
   return (
     <div className="min-h-screen min-w-screen bg-white w-">
@@ -207,7 +207,7 @@ export default function Home() {
             <span className="font-bold">Time Interval: </span>
             <select
               value={novLcFilterTimeInterval}
-              onChange={(e) => setnovLcFilterTimeInterval(Number(e.target.value))}
+              onChange={(e) => setNovLcFilterTimeInterval(Number(e.target.value))}
             >
               <option value="0">No Filter</option>
               <option value="1">1 Hour</option>
@@ -224,7 +224,7 @@ export default function Home() {
             <span className="font-bold">Lane Direction: </span>
             <select
               value={novLcFilterLaneDirection}
-              onChange={(e) => setnovLcFilterLaneDirection(e.target.value)}
+              onChange={(e) => setNovLcFilterLaneDirection(e.target.value)}
             >
               <option value="">All Directions</option>
               <option value="north">North</option>
