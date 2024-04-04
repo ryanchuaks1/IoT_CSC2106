@@ -17,7 +17,7 @@ class LoRa_Module:
     def receive(self) -> list[int]:
         while not self.conn.readable():
             time.sleep(0.1)
-        payload = self.conn.read(self.payload_length).decode().rstrip('\0')
+        payload = self.conn.read(self.payload_length).decode()[:-1]
         return [ord(char) for char in payload]
 
 class NeighbourJunction:
