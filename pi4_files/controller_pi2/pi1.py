@@ -12,7 +12,7 @@ hostname = config.ip_addr
 broker_port = config.port
 topic = "meowmeowmeowmeow"
 
-my_junction = MyJunction(1,2,6,4,5)
+my_junction = MyJunction(2,3,1,4,5)
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
