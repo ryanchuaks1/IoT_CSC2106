@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Barchart from "@/components/Barchart";
 import LineChart from "@/components/Linechart";
+import PieChart from "@/components/Piechart";
 
 export default function Home() {
   const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
@@ -25,6 +26,8 @@ export default function Home() {
   const [novLcFilterTrafficId, setnovLcFilterTrafficId] = useState<number>(-1);
   const [novLcFilterTimeInterval, setNovLcFilterTimeInterval] = useState<number>(0);
   const [novLcFilterLaneDirection, setNovLcFilterLaneDirection] = useState<string>("");
+  const [novLdDayPcData, setNovLdDayPcData] = useState<number[]>([]);
+  const [novLdWeekPcData, setNovLdWeekPcData] = useState<number[]>([]);
   const [novLcData, setNovLcData] = useState<{ labels: String[]; datasets: any[]; }>({ labels: [], datasets: [] });
   const [novLdLcData, setNovLdLcData] = useState<{ labels: String[]; datasets: any[]; }>({ labels: [], datasets: [] });
 
@@ -70,6 +73,7 @@ export default function Home() {
       // Process the data for each chart/data visualization
       processNovLcData(trafficCollectionResults);
       processNovLdLcData(trafficCollectionResults);
+      processNovLdPcData(trafficCollectionResults);
     } catch (error) {
       console.error("Error fetching traffic data:", error);
     }
@@ -286,35 +290,110 @@ export default function Home() {
       }
     }
 
-    const labels = selectedgroupedDataByDirection
-      .slice(-20)
-      .map((g: any) => {
-        const date = new Date(g.timestamp);
-        return date.toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+    const labels = selectedgroupedDataByDirection.slice(-20).map((g: any) => {
+      const date = new Date(g.timestamp);
+      return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
+    });
 
     // Prepare the final data object for the chart
     const data = {
       labels,
-      datasets: Object.entries(datasetsForDirections).map(([direction, dataset]) => {
-        return {
-          // Label as key for the dataset
-          label: `${direction.charAt(0).toUpperCase() + direction.slice(1)}`,
-          data: dataset,
-          borderColor: directionColors[direction],
-          backgroundColor: directionColors[direction],
-          tension: 0.1,
-          fill: false,
-        };
-      }),
+      datasets: Object.entries(datasetsForDirections).map(
+        ([direction, dataset]) => {
+          return {
+            // Label as key for the dataset
+            label: `${direction.charAt(0).toUpperCase() + direction.slice(1)}`,
+            data: dataset,
+            borderColor: directionColors[direction],
+            backgroundColor: directionColors[direction],
+            tension: 0.1,
+            fill: false,
+          };
+        }
+      ),
     };
 
     setNovLdLcData(data);
+  };
+
+  // Process the data for number-of-vehicles (lane-direction) pie chart
+  const processNovLdPcData = (trafficCollectionResults: any) => {
+    // Group the traffic data by direction
+    const directions = ["north", "south", "east", "west"];
+
+    // Initialize an object to hold datasets for each direction
+    const datasetsForDayDirections = directions.reduce((acc: any, direction) => {
+      acc[direction] = {
+        label: `Number of vehicles (${direction})`,
+        data: [],
+        borderColor: "",
+        tension: 0.1,
+        fill: false,
+      };
+      return acc;
+    }, {});
+    const datasetsForWeekDirections = directions.reduce((acc: any, direction) => {
+      acc[direction] = {
+        label: `Number of vehicles (${direction})`,
+        data: [],
+        borderColor: "",
+        tension: 0.1,
+        fill: false,
+      };
+      return acc;
+    }, {});
+
+    // From the trafficCollectionResults, get the past 7 days of data
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    let dayTrafficCollectionResults = trafficCollectionResults.filter(
+      (item: any) => new Date(item.timestamp) > oneDayAgo
+    );
+    let weekTrafficCollectionResults = trafficCollectionResults.filter(
+      (item: any) => new Date(item.timestamp) > oneWeekAgo
+    );
+
+    // Sum the number of vehicles for each direction
+    const daySumByDirection = dayTrafficCollectionResults.reduce(
+      (acc: any, item: any) => {
+        if (directions.includes(item.lane_direction)) {
+          if (!acc[item.lane_direction]) {
+            acc[item.lane_direction] = 0;
+          }
+          acc[item.lane_direction] += Number(item.number_of_vehicles);
+        }
+        return acc;
+      },
+      {}
+    );
+    const weekSumByDirection = weekTrafficCollectionResults.reduce(
+      (acc: any, item: any) => {
+        if (directions.includes(item.lane_direction)) {
+          if (!acc[item.lane_direction]) {
+            acc[item.lane_direction] = 0;
+          }
+          acc[item.lane_direction] += Number(item.number_of_vehicles);
+        }
+        return acc;
+      },
+      {}
+    );
+
+    // Perform the final data object for the chart
+    for (const direction of directions) {
+      datasetsForDayDirections[direction] = daySumByDirection[direction] || 0;
+      datasetsForWeekDirections[direction] = weekSumByDirection[direction] || 0;
+    }
+
+    setNovLdDayPcData(Object.values(datasetsForDayDirections));
+    setNovLdWeekPcData(Object.values(datasetsForWeekDirections));
   };
 
   // Adjusts average cars in last hour, day, week whenever trafficCollectionData changes
@@ -396,7 +475,7 @@ export default function Home() {
               value={novLcFilterTrafficId}
               onChange={(e) => setnovLcFilterTrafficId(Number(e.target.value))}
             >
-              <option value="-1">All</option>
+              <option key="-1" value="-1">All</option>
 
               {Array.from(
                 new Set(
@@ -407,7 +486,7 @@ export default function Home() {
               )
                 .sort((a: any, b: any) => a - b)
                 .map((id: any) => (
-                  <option key={id} value={id}>
+                  <option key={id.toString()} value={id}>
                     {id}
                   </option>
                 ))}
@@ -422,14 +501,14 @@ export default function Home() {
                 setNovLcFilterTimeInterval(Number(e.target.value))
               }
             >
-              <option value="0">No Filter</option>
-              <option value="1">1 Hour</option>
-              <option value="2">3 Hours</option>
-              <option value="3">5 Hours</option>
-              <option value="4">12 Hours</option>
-              <option value="5">Daily</option>
-              <option value="6">Weekly</option>
-              <option value="7">Monthly</option>
+              <option key="0" value="0">No Filter</option>
+              <option key="1" value="1">1 Hour</option>
+              <option key="2" value="2">3 Hours</option>
+              <option key="3" value="3">5 Hours</option>
+              <option key="4" value="4">12 Hours</option>
+              <option key="5" value="5">Daily</option>
+              <option key="6" value="6">Weekly</option>
+              <option key="7" value="7">Monthly</option>
             </select>
           </div>
 
@@ -439,11 +518,11 @@ export default function Home() {
               value={novLcFilterLaneDirection}
               onChange={(e) => setNovLcFilterLaneDirection(e.target.value)}
             >
-              <option value="">All Directions</option>
-              <option value="north">North</option>
-              <option value="south">South</option>
-              <option value="east">East</option>
-              <option value="west">West</option>
+              <option key="0" value="">All Directions</option>
+              <option key="1" value="north">North</option>
+              <option key="2" value="south">South</option>
+              <option key="3" value="east">East</option>
+              <option key="4" value="west">West</option>
             </select>
           </div>
         </div>
@@ -503,6 +582,20 @@ export default function Home() {
             dataDescription={["Traffic ID 1", "Traffic ID 2"]}
             chartWidth="w-max-content lg:w-1/2"
           /> */}
+        </div>
+
+        <div className="flex justify-around px-4">
+          <PieChart
+            header={"Total number of vehicles per lane direction (Past 1 days)"}
+            chartWidth="w-max-content lg:w-1/2"
+            data={novLdDayPcData}
+          />
+          
+          <PieChart
+            header={"Total number of vehicles per lane direction (Past 7 days)"}
+            chartWidth="w-max-content lg:w-1/2"
+            data={novLdWeekPcData}
+          />
         </div>
       </div>
     </div>
