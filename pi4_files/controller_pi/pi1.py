@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 import paho.mqtt.client as mqtt
 import ast
+=======
+import ast
+import paho.mqtt.client as mqtt
+>>>>>>> Stashed changes
 import config
 import threading
 import time
@@ -13,6 +18,7 @@ broker_port = config.port
 topic = "meowmeowmeowmeow"
 
 my_junction = MyJunction(1,2,6,4,5)
+<<<<<<< Updated upstream
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -47,6 +53,30 @@ def initialise_mqtt():
     client.on_connect = on_connect
     client.on_message = on_message
 
+=======
+topic_buffer = []
+
+def on_connect(client, userdata, flags, reason_code, properties):
+    print(f"Connected with result code {reason_code}")
+    client.subscribe(topic)
+
+
+def on_message(client, userdata, msg):
+    payload_str = msg.payload.decode("utf-8")
+    msg_dict = ast.literal_eval(payload_str)
+    direction = msg_dict['direction']
+    x = msg_dict['inflow']
+    y = msg_dict['outflow']
+    topic_buffer.append({'direction': direction, 'x': x, 'y': y})
+
+
+def initialise_mqtt():
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+    client.on_connect = on_connect
+    client.on_message = on_message
+
+>>>>>>> Stashed changes
     client.connect(hostname, broker_port, 60)
     return client
 
@@ -77,6 +107,31 @@ def receive_from_lora_thread():
 
         print("Traffic ID:", traffic_data[0], "Counts:", traffic_data[1:])
 
+<<<<<<< Updated upstream
+=======
+def handle_mqtt_buffer_thread():
+    while len(topic_buffer) > 0:
+        direction = topic_buffer[-1]['direction']
+        inflow_count = topic_buffer[-1]['x']
+        outflow_count = topic_buffer[-1]['y']
+
+        if direction == "north":
+            my_junction.north.inflow = inflow_count
+            my_junction.north.outflow = outflow_count
+        elif direction == "east":
+            my_junction.east.inflow = inflow_count
+            my_junction.east.outflow = outflow_count
+        elif direction == "south":
+            my_junction.south.inflow = inflow_count
+            my_junction.south.outflow = outflow_count
+        elif direction == "west":
+            my_junction.west.inflow = inflow_count
+            my_junction.west.outflow = outflow_count
+
+        topic_buffer.pop()
+    
+    time.sleep(5)
+>>>>>>> Stashed changes
 
 def decision_thread():
     ns_interval = 30
@@ -105,11 +160,11 @@ def decision_thread():
     print("Current traffic direction", curr_direction, " Duration is:", ns_interval if curr_direction == "ns" else ew_interval)
 
 def main():
-    #threading.Thread(target=mqtt_transmission, daemon=True).start()
-    #threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
+    threading.Thread(target=mqtt_transmission, daemon=True).start()
+    threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
     threading.Thread(target=transmit_to_lora_thread, daemon=True).start()
     threading.Thread(target=receive_from_lora_thread, daemon=True).start()
-    #threading.Thread(target=decision_thread, daemon=True).start()
+    threading.Thread(target=decision_thread, daemon=True).start()
 
 
 if __name__ == "__main__":
