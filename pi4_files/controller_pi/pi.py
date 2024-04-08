@@ -102,14 +102,16 @@ def decision_thread():
             if curr_traffic_time == ns_interval - 5:  # If traffic light time is about to end start amber
                 print("Amber light for 5 seconds")
                 time.sleep(5)
-                if ((my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) +
-                        (my_junction.south.inflow * 0.8 + my_junction.south.r_inflow * 0.2)) > config.avg_traffic_ns:
-                    ns_interval = ns_interval + 2 if ns_interval < max_interval else ns_interval
-                    print("New NS interval", ns_interval)
+                if ((my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) +
+                        (my_junction.west.inflow * 0.8 + my_junction.west.r_inflow * 0.2)) > config.avg_traffic_ew:
+                    ew_interval = ew_interval + 2 if ew_interval < max_interval else ew_interval
+                    print("New EW interval", ew_interval)
                 else:
-                    ns_interval = ns_interval - 2 if ns_interval > min_interval else ns_interval
-                    print("New NS interval", ns_interval,
+                    ew_interval = ew_interval - 2 if ew_interval > min_interval else ew_interval
+                    print("New EW interval", ew_interval,
                           "Time", curr_traffic_time)
+                curr_direction = "ew"
+
 
             print("Current traffic direction",
                   curr_direction, "Time", curr_traffic_time)
@@ -130,14 +132,16 @@ def decision_thread():
             if curr_traffic_time == ew_interval - 5:  # If traffic light time is about to end start amber
                 print("Amber light for 5 seconds")
                 time.sleep(5)
-                if ((my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) +
-                        (my_junction.west.inflow * 0.8 + my_junction.west.r_inflow * 0.2)) > config.avg_traffic_ew:
-                    ew_interval = ew_interval + 2 if ew_interval < max_interval else ew_interval
-                    print("New EW interval", ew_interval)
+                if ((my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) +
+                        (my_junction.south.inflow * 0.8 + my_junction.south.r_inflow * 0.2)) > config.avg_traffic_ns:
+                    ns_interval = ns_interval + 2 if ns_interval < max_interval else ns_interval
+                    print("New NS interval", ns_interval)
                 else:
-                    ew_interval = ew_interval - 2 if ew_interval > min_interval else ew_interval
-                    print("New EW interval", ew_interval,
+                    ns_interval = ns_interval - 2 if ns_interval > min_interval else ns_interval
+                    print("New NS interval", ns_interval,
                           "Time", curr_traffic_time)
+                curr_direction = "ns"
+
 
             print("Current traffic direction",
                   curr_direction, "Time", curr_traffic_time)
