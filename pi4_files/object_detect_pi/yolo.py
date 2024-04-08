@@ -10,7 +10,7 @@ from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
 from ultralytics.utils.plotting import Annotator, colors
 
-from pi4_files.object_detect_pi.globals import update_values
+from globals import update_values
 
 # from mqtt_node import cars_detected
 
@@ -18,6 +18,9 @@ def count_vehicles(source, model):
     cap = cv2.VideoCapture(source)
 
     model = YOLO(model)
+
+    x = 0
+    y = 0
 
     line_thickness = 2
     track_thickness = 2

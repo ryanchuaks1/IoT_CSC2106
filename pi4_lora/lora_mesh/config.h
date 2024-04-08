@@ -11,7 +11,7 @@
 // When the difference in timestamp is >248, then we always prefer the packet that's smaller (because it will wrap back to 0 after 255)
 #define PKT_THRESHOLD 248
 
-#define TRAFFIC_ID 3
-uint8_t adj_traffic_ids[MAX_ADJ_TRAFFIC] = {2,6,4,5};
+#define TRAFFIC_ID 2
+uint8_t adj_traffic_ids[MAX_ADJ_TRAFFIC] = {1,3,4,5};
 
 #endif // CONFIG_H
