@@ -7,7 +7,7 @@ from globals import check_ambulance, get_x, get_y, get_time, set_ambulance
 
 hostname = config.ip_addr
 broker_port = config.port
-topic = "meowmeowmeowmeow"
+topic = config.topic
 direction = config.direction
 
 def on_connect(client, userdata, flags, reason_code, properties):
