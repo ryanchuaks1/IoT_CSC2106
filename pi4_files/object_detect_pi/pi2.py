@@ -1,9 +1,9 @@
 import paho.mqtt.client as mqtt
-import pi4_files.object_detect_pi.config as config
+import config
 import threading
 import time
-from pi4_files.object_detect_pi.yolo import count_vehicles
-from pi4_files.object_detect_pi.globals import get_x, get_y, get_time
+from yolo import count_vehicles
+from globals import check_ambulance, get_x, get_y, get_time, set_ambulance
 
 hostname = config.ip_addr
 broker_port = config.port
@@ -38,7 +38,15 @@ def cars_detection_task():
         y = get_y()
         curr_t = get_time()
 
-        if curr_t != old_t:
+        if check_ambulance():
+            msg = {
+                'direction': direction,
+                'inflow': 127,
+                'outflow': 127
+            }
+            client.publish(topic, str(msg))
+            set_ambulance(False)
+        elif curr_t != old_t:
             msg = {
                 'direction': direction,
                 'inflow': x,

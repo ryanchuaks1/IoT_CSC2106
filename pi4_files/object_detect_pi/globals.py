@@ -3,6 +3,7 @@ import time
 x = 0
 y = 0
 curr_t = 0
+ambulance = False
 
 def update_values(new_x, new_y):
     global x, y, curr_t
@@ -18,3 +19,10 @@ def get_y():
 
 def get_time():
     return curr_t
+
+def check_ambulance():
+    return ambulance
+
+def set_ambulance(status):
+    global ambulance
+    ambulance = status

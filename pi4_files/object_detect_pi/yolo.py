@@ -10,7 +10,7 @@ from ultralytics import YOLO
 from ultralytics.utils.files import increment_path
 from ultralytics.utils.plotting import Annotator, colors
 
-from globals import update_values
+from globals import set_ambulance, update_values
 
 # from mqtt_node import cars_detected
 
@@ -47,7 +47,8 @@ def count_vehicles(source, model):
             "text_color": (0, 0, 0),  # Region Text Color
         },
     ]
-    classes_to_count = [0, 2, 3, 5, 7]  # People and Vehicle
+    classes_to_count = [2, 3, 5, 7]  # Vehicles
+    Truck_Class = 7
     names = model.model.names
 
     payload = ""
@@ -76,6 +77,10 @@ def count_vehicles(source, model):
                     box, str(names[cls]), color=colors(cls, True))
                 bbox_center = (box[0] + box[2]) / \
                     2, (box[1] + box[3]) / 2  # Bbox center
+                
+                if cls == Truck_Class:
+                    # set_ambulance(True)
+                    print("Ambulance detected")
 
                 track = track_history[track_id]  # Tracking Lines plot
                 track.append((float(bbox_center[0]), float(bbox_center[1])))

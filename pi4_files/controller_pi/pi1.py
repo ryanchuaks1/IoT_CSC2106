@@ -12,7 +12,8 @@ hostname = config.ip_addr
 broker_port = config.port
 topic = "meowmeowmeowmeow"
 
-my_junction = MyJunction(1,2,6,4,5)
+my_junction = MyJunction(1, 2, 6, 4, 5)
+
 
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
@@ -25,7 +26,7 @@ def on_message(client, userdata, msg):
     direction = msg_dict['direction']
     inflow_count = msg_dict['inflow']
     outflow_count = msg_dict['outflow']
-        
+
     if direction == "north":
         my_junction.north.inflow = inflow_count
         my_junction.north.outflow = outflow_count
@@ -38,7 +39,9 @@ def on_message(client, userdata, msg):
     elif direction == "west":
         my_junction.west.inflow = inflow_count
         my_junction.west.outflow = outflow_count
-    print(my_junction.north.inflow, my_junction.north.outflow, my_junction.east.inflow, my_junction.east.outflow, my_junction.south.inflow, my_junction.south.outflow, my_junction.west.inflow, my_junction.west.outflow)
+    print(my_junction.north.inflow, my_junction.north.outflow, my_junction.east.inflow, my_junction.east.outflow,
+          my_junction.south.inflow, my_junction.south.outflow, my_junction.west.inflow, my_junction.west.outflow)
+
 
 def initialise_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -55,16 +58,18 @@ def mqtt_transmission():
     while True:
         client.loop()
 
+
 def transmit_to_lora_thread():
     while True:
-        my_junction.lora_module.transmit(my_junction.id, [my_junction.north.outflow, my_junction.south.outflow, my_junction.east.outflow, my_junction.west.outflow])
+        my_junction.lora_module.transmit(my_junction.id, [
+                                         my_junction.north.outflow, my_junction.south.outflow, my_junction.east.outflow, my_junction.west.outflow])
         time.sleep(1)
-    
+
 
 def receive_from_lora_thread():
     while True:
         traffic_data = my_junction.lora_module.receive()
-        
+
         if my_junction.north.id == traffic_data[0]:
             my_junction.south.r_inflow = traffic_data[2]
         elif my_junction.south.id == traffic_data[0]:
@@ -78,37 +83,86 @@ def receive_from_lora_thread():
 
 
 def decision_thread():
-    ns_interval = 30
-    ew_interval = 30
+    ns_interval = 30  # Current interval of North - South
+    ew_interval = 30  # Current interval of East - West
+
     min_interval = 20
     max_interval = 40
+
+    curr_traffic_time = 0
+
     curr_direction = "ns"
 
-    if curr_direction == "ns":
-        if (my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) + \
-        (my_junction.south.inflow * 0.8 + my_junction.south.r_inflow * 0.2) > config.avg_traffic_ns:
-            ns_interval = ns_interval + 2 if ns_interval < max_interval else ns_interval
-            print("New NS interval", ns_interval)
-        else:
-            ns_interval = ns_interval - 2 if ns_interval > min_interval else ns_interval
-            print("New NS interval", )
-    else:
-        if (my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) + \
-            (my_junction.west.inflow * 0.8 + my_junction.west.r_inflow * 0.2) > config.avg_traffic_ew:
-            ew_interval = ew_interval + 2 if ew_interval < max_interval else ew_interval
-            print("New EW interval", ew_interval)
-        else:
-            ew_interval = ew_interval - 2 if ew_interval > min_interval else ew_interval
-            print("New EW interval", ew_interval)
+    while True:
+        while curr_direction == "ns":
+            # If ambulance in current directtion, delay traffic light 5 more seconds
+            if (check_ambulance() == "ns"):
+                time.sleep(5)
+            # If ambulance in opposite direction, switch traffic light
+            elif (check_ambulance() == "ew"):
+                print("Amber light for 5 seconds")
+                time.sleep(5)
+                curr_direction = "ew"
+                break
 
-    print("Current traffic direction", curr_direction, " Duration is:", ns_interval if curr_direction == "ns" else ew_interval)
+            if curr_traffic_time == ns_interval - 5:  # If traffic light time is about to end start amber
+                print("Amber light for 5 seconds")
+                time.sleep(5)
+                if ((my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) +
+                        (my_junction.south.inflow * 0.8 + my_junction.south.r_inflow * 0.2)) > config.avg_traffic_ns:
+                    ns_interval = ns_interval + 2 if ns_interval < max_interval else ns_interval
+                    print("New NS interval", ns_interval)
+                else:
+                    ns_interval = ns_interval - 2 if ns_interval > min_interval else ns_interval
+                    print("New NS interval", ns_interval,
+                          "Time", curr_traffic_time)
+
+            print("Current traffic direction",
+                  curr_direction, "Time", curr_traffic_time)
+            curr_traffic_time += 1
+            time.sleep(1)
+
+        while curr_direction == "ew":
+            # If ambulance in current directtion, delay traffic light 5 more seconds
+            if (check_ambulance() == "ew"):
+                time.sleep(5)
+            # If ambulance in opposite direction, switch traffic light
+            elif (check_ambulance() == "ns"):
+                print("Amber light for 5 seconds")
+                time.sleep(5)
+                curr_direction = "ns"
+                break
+
+            if curr_traffic_time == ew_interval - 5:  # If traffic light time is about to end start amber
+                print("Amber light for 5 seconds")
+                time.sleep(5)
+                if ((my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) +
+                        (my_junction.west.inflow * 0.8 + my_junction.west.r_inflow * 0.2)) > config.avg_traffic_ew:
+                    ew_interval = ew_interval + 2 if ew_interval < max_interval else ew_interval
+                    print("New EW interval", ew_interval)
+                else:
+                    ew_interval = ew_interval - 2 if ew_interval > min_interval else ew_interval
+                    print("New EW interval", ew_interval,
+                          "Time", curr_traffic_time)
+
+            print("Current traffic direction",
+                  curr_direction, "Time", curr_traffic_time)
+            curr_traffic_time += 1
+            time.sleep(1)
+
+
+def check_ambulance():
+    if my_junction.north.inflow == 127 or my_junction.south.inflow == 127:
+        return "ns"
+    elif my_junction.east.inflow == 127 or my_junction.west.inflow == 127:
+        return "ew"
 
 def main():
     threading.Thread(target=mqtt_transmission, daemon=True).start()
-    #threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
+    # threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
     threading.Thread(target=transmit_to_lora_thread, daemon=True).start()
     threading.Thread(target=receive_from_lora_thread, daemon=True).start()
-    #threading.Thread(target=decision_thread, daemon=True).start()
+    # threading.Thread(target=decision_thread, daemon=True).start()
 
 
 if __name__ == "__main__":
