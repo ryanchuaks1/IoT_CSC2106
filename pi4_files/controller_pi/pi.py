@@ -10,14 +10,13 @@ import random
 
 hostname = config.ip_addr
 broker_port = config.port
-topic = "meowmeowmeowmeow"
+topic = config.topic
 
-my_junction = MyJunction(1,2,6,4,5)
+my_junction = MyJunction(config.TRAFFIC_ID, config.NORTH_ID, config.SOUTH_ID, config.EAST_ID, config.WEST_ID)
 
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
     client.subscribe(topic)
-
 
 def on_message(client, userdata, msg):
     payload_str = msg.payload.decode("utf-8")
@@ -27,17 +26,18 @@ def on_message(client, userdata, msg):
     outflow_count = msg_dict['outflow']
         
     if direction == "north":
-        my_junction.north.inflow = inflow_count
-        my_junction.north.outflow = outflow_count
+        my_junction.north.inflow = int(inflow_count) + 1
+        my_junction.north.outflow = int(outflow_count) + 1
     elif direction == "east":
-        my_junction.east.inflow = inflow_count
-        my_junction.east.outflow = outflow_count
+        my_junction.east.inflow = int(inflow_count) + 1
+        my_junction.east.outflow = int(outflow_count) + 1
     elif direction == "south":
-        my_junction.south.inflow = inflow_count
-        my_junction.south.outflow = outflow_count
+        my_junction.south.inflow = int(inflow_count) + 1
+        my_junction.south.outflow = int(outflow_count) + 1
     elif direction == "west":
-        my_junction.west.inflow = inflow_count
-        my_junction.west.outflow = outflow_count
+        my_junction.west.inflow = int(inflow_count) + 1
+        my_junction.west.outflow = int(outflow_count) + 1
+    
     print(my_junction.north.inflow, my_junction.north.outflow, my_junction.east.inflow, my_junction.east.outflow, my_junction.south.inflow, my_junction.south.outflow, my_junction.west.inflow, my_junction.west.outflow)
 
 def initialise_mqtt():
@@ -49,7 +49,6 @@ def initialise_mqtt():
     client.connect(hostname, broker_port, 60)
     return client
 
-
 def mqtt_transmission():
     client = initialise_mqtt()
     while True:
@@ -57,14 +56,13 @@ def mqtt_transmission():
 
 def transmit_to_lora_thread():
     while True:
-        my_junction.lora_module.transmit(my_junction.id, [my_junction.north.outflow, my_junction.south.outflow, my_junction.east.outflow, my_junction.west.outflow])
-        time.sleep(1)
-    
+        my_junction.lora_module.transmit(1, [my_junction.north.outflow, my_junction.south.outflow, my_junction.east.outflow, my_junction.west.outflow])
+        time.sleep(5)
 
 def receive_from_lora_thread():
     while True:
         traffic_data = my_junction.lora_module.receive()
-        
+
         if my_junction.north.id == traffic_data[0]:
             my_junction.south.r_inflow = traffic_data[2]
         elif my_junction.south.id == traffic_data[0]:
@@ -105,7 +103,6 @@ def decision_thread():
 
 def main():
     threading.Thread(target=mqtt_transmission, daemon=True).start()
-    #threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
     threading.Thread(target=transmit_to_lora_thread, daemon=True).start()
     threading.Thread(target=receive_from_lora_thread, daemon=True).start()
     #threading.Thread(target=decision_thread, daemon=True).start()

@@ -23,9 +23,9 @@ class LoRa_Module:
 class NeighbourJunction:
     def __init__(self, id) -> None:
         self.id = id
-        self.inflow = 0
-        self.outflow = 0
-        self.r_inflow = 0
+        self.inflow = 1
+        self.outflow = 1
+        self.r_inflow = 1
 
 class MyJunction:
     def __init__(self, id, north_id, south_id, east_id, west_id) -> None:
