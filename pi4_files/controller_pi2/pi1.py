@@ -14,7 +14,6 @@ topic = "meowmeowmeowmeow"
 
 my_junction = MyJunction(2,3,1,4,5)
 
-
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
     client.subscribe(topic)
