@@ -12,11 +12,14 @@ hostname = config.ip_addr
 broker_port = config.port
 topic = config.topic
 
-my_junction = MyJunction(config.TRAFFIC_ID, config.NORTH_ID, config.SOUTH_ID, config.EAST_ID, config.WEST_ID)
+my_junction = MyJunction(config.TRAFFIC_ID, config.NORTH_ID,
+                         config.SOUTH_ID, config.EAST_ID, config.WEST_ID)
+
 
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
     client.subscribe(topic)
+
 
 def on_message(client, userdata, msg):
     payload_str = msg.payload.decode("utf-8")
@@ -37,8 +40,10 @@ def on_message(client, userdata, msg):
     elif direction == "west":
         my_junction.west.inflow = int(inflow_count) + 1
         my_junction.west.outflow = int(outflow_count) + 1
-    
-    print(my_junction.north.inflow, my_junction.north.outflow, my_junction.east.inflow, my_junction.east.outflow, my_junction.south.inflow, my_junction.south.outflow, my_junction.west.inflow, my_junction.west.outflow)
+
+    print(my_junction.north.inflow, my_junction.north.outflow, my_junction.east.inflow, my_junction.east.outflow,
+          my_junction.south.inflow, my_junction.south.outflow, my_junction.west.inflow, my_junction.west.outflow)
+
 
 def initialise_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -49,6 +54,7 @@ def initialise_mqtt():
     client.connect(hostname, broker_port, 60)
     return client
 
+
 def mqtt_transmission():
     client = initialise_mqtt()
     while True:
@@ -57,8 +63,10 @@ def mqtt_transmission():
 
 def transmit_to_lora_thread():
     while True:
-        my_junction.lora_module.transmit(1, [my_junction.north.outflow, my_junction.south.outflow, my_junction.east.outflow, my_junction.west.outflow])
+        my_junction.lora_module.transmit(
+            1, [my_junction.north.outflow, my_junction.south.outflow, my_junction.east.outflow, my_junction.west.outflow])
         time.sleep(5)
+
 
 def receive_from_lora_thread():
     while True:
@@ -102,7 +110,7 @@ def decision_thread():
             if curr_traffic_time == ns_interval - 5:  # If traffic light time is about to end start amber
                 print("Amber light for 5 seconds")
                 time.sleep(5)
-                if ((my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) +
+                if ((my_junction.east.inflow * 0.8 + my_junction.east.r_inflow * 0.2) + \
                         (my_junction.west.inflow * 0.8 + my_junction.west.r_inflow * 0.2)) > config.avg_traffic_ew:
                     ew_interval = ew_interval + 2 if ew_interval < max_interval else ew_interval
                     print("New EW interval", ew_interval)
@@ -111,7 +119,6 @@ def decision_thread():
                     print("New EW interval", ew_interval,
                           "Time", curr_traffic_time)
                 curr_direction = "ew"
-
 
             print("Current traffic direction",
                   curr_direction, "Time", curr_traffic_time)
@@ -132,7 +139,7 @@ def decision_thread():
             if curr_traffic_time == ew_interval - 5:  # If traffic light time is about to end start amber
                 print("Amber light for 5 seconds")
                 time.sleep(5)
-                if ((my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) +
+                if ((my_junction.north.inflow * 0.8 + my_junction.north.r_inflow * 0.2) + \
                         (my_junction.south.inflow * 0.8 + my_junction.south.r_inflow * 0.2)) > config.avg_traffic_ns:
                     ns_interval = ns_interval + 2 if ns_interval < max_interval else ns_interval
                     print("New NS interval", ns_interval)
@@ -141,7 +148,6 @@ def decision_thread():
                     print("New NS interval", ns_interval,
                           "Time", curr_traffic_time)
                 curr_direction = "ns"
-
 
             print("Current traffic direction",
                   curr_direction, "Time", curr_traffic_time)
@@ -154,6 +160,7 @@ def check_ambulance():
         return "ns"
     elif my_junction.east.inflow == 127 or my_junction.west.inflow == 127:
         return "ew"
+
 
 def main():
     threading.Thread(target=mqtt_transmission, daemon=True).start()
