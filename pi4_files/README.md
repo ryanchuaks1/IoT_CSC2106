@@ -17,6 +17,7 @@
 |sudo apt install python3-pip|Install Python 3 package manager, pip.|
 |sudo apt install -y mosquitto mosquitto-clients|Install the Mosquitto MQTT broker and its command-line clients.|
 |sudo apt install python3-opencv|Install the Open CV.|
+|sudo apt install python3-picamera2|If raspberry pi camera is in use.|
 |pip3 install --trusted-host www.piwheels.org ultralytics|
 |pip3 install paho-mqtt|Install the Paho MQTT client library for Python 3.|
 |pip3 install shapely|
