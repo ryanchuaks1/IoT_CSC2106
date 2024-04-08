@@ -4,8 +4,9 @@ import threading
 import time
 from serial import Serial
 from globals import MyJunction
-import random
+import random, requests
 
+SERVER_API_URL = "http://127.0.0.1:5000"
 my_junction = MyJunction(3,2,6,4,5)
 
 def transmit_to_lora_thread():
@@ -27,7 +28,18 @@ def receive_from_lora_thread():
         elif my_junction.west.id == traffic_data[0]:
             my_junction.east.r_inflow = traffic_data[3]
 
+        data = {
+            "traffic_data": [
+                {"traffic_id": traffic_data[0], "lane_direction": "north", "number_of_vehicles": traffic_data[1], "is_emergency": False},
+                {"traffic_id": traffic_data[0], "lane_direction": "south", "number_of_vehicles": traffic_data[2], "is_emergency": False},
+                {"traffic_id": traffic_data[0], "lane_direction": "east", "number_of_vehicles": traffic_data[3], "is_emergency": False},
+                {"traffic_id": traffic_data[0], "lane_direction": "west", "number_of_vehicles": traffic_data[4], "is_emergency": False}
+            ]
+        }
+        
         print("Traffic ID:", traffic_data[0], "Counts:", traffic_data[1:])
+        response_json = requests.post(SERVER_API_URL + "/api/traffic-data", json = data)
+        print("Response from HTTP POST:", response_json)
 
 def main():
     #threading.Thread(target=mqtt_transmission, daemon=True).start()
