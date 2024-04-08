@@ -12,7 +12,7 @@ hostname = config.ip_addr
 broker_port = config.port
 topic = "meowmeowmeowmeow"
 
-my_junction = MyJunction(1,2,6,4,5)
+my_junction = MyJunction(2,3,1,4,5)
 
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
@@ -104,7 +104,7 @@ def decision_thread():
     print("Current traffic direction", curr_direction, " Duration is:", ns_interval if curr_direction == "ns" else ew_interval)
 
 def main():
-    threading.Thread(target=mqtt_transmission, daemon=True).start()
+    #threading.Thread(target=mqtt_transmission, daemon=True).start()
     #threading.Thread(target=handle_mqtt_buffer_thread, daemon=True).start()
     threading.Thread(target=transmit_to_lora_thread, daemon=True).start()
     threading.Thread(target=receive_from_lora_thread, daemon=True).start()

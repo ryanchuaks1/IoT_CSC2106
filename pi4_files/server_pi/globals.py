@@ -25,6 +25,7 @@ class NeighbourJunction:
         self.id = id
         self.inflow = 0
         self.outflow = 0
+        
         self.r_inflow = 0
 
 class MyJunction:
@@ -35,4 +36,4 @@ class MyJunction:
         self.east = NeighbourJunction(east_id)
         self.west = NeighbourJunction(west_id)
 
-        self.lora_module = LoRa_Module("/dev/ttyUSB0")
+        self.lora_module = LoRa_Module("COM3")
