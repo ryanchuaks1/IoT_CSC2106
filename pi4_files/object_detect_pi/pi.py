@@ -3,7 +3,8 @@ import config
 import threading
 import time
 from yolo import count_vehicles
-from globals import check_ambulance, get_x, get_y, get_time, set_ambulance
+from globals import check_ambulance, get_x, get_y, get_time, set_ambulance, get_e_veh
+from microphone import stream_audio_and_detect_e_vehicle
 
 hostname = config.ip_addr
 broker_port = config.port
@@ -37,7 +38,9 @@ def cars_detection_task():
         x = get_x()
         y = get_y()
         curr_t = get_time()
-
+        siren = get_e_veh()
+        if siren == 1:
+            print("Siren detected")
         if check_ambulance():
             msg = {
                 'direction': direction,
@@ -57,10 +60,13 @@ def cars_detection_task():
 
         time.sleep(1)
 
+def sound_sensor_task():
+    stream_audio_and_detect_e_vehicle()
 
 def main():
     threading.Thread(target=yolov8_task, daemon=True).start()
     threading.Thread(target=cars_detection_task, daemon=True).start()
+    threading.Thread(target=sound_sensor_task, daemon=True).start()
 
 if __name__ == "__main__":
     main()
